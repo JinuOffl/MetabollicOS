@@ -99,29 +99,31 @@ gluconav/
 - **Services**: `diet_engine.py` and `exercise_engine.py` apply context-aware heuristics (Sleep/Glucose/Burnout) on top of ML scores.
 - **Verification**: Verified via `backend/test_recommend.py`.
 - ❌ `services/exercise_engine.py` — exercise recommendation prediction
-- ❌ DB Models: `user.py`, `meal.py`, `exercise.py`, `glucose.py`
+- ✅ DB Models: `user.py`, `meal.py`, `exercise.py`, `glucose.py`
 
 ### Phase 2A — FastAPI Backend
-- ❌ `main.py` — FastAPI app with CORS
-- ❌ `POST /api/v1/users/onboard`
-- ❌ `GET /api/v1/recommend/{user_id}`
-- ❌ `POST /api/v1/feedback`
-- ❌ `POST /api/v1/glucose-reading`
-- ❌ `GET /api/v1/meals`
-- ❌ `GET /api/v1/exercises`
-- ❌ Pydantic schemas: user, recommendation, feedback
+- ✅ `main.py` — FastAPI app with CORS
+- ✅ `POST /api/v1/users/onboard`
+- ✅ `GET /api/v1/recommend/{user_id}`
+- ✅ `POST /api/v1/feedback`
+- ✅ `POST /api/v1/glucose-reading`
+- ✅ `GET /api/v1/meals`
+- ✅ `GET /api/v1/exercises`
+- ✅ Pydantic schemas: user, recommendation, feedback
 - ❌ Context service (`context_service.py`)
 
 ### Phase 2B — Flutter App (OpenNutriTracker-based)
 - ✅ J0: App renamed → `GlucoNavApp`, GlucoNav Apple brand colors applied (`#0F6E56` teal, `#F5F5F7` canvas)
-- ✅ `pubspec.yaml` — description updated, `shared_preferences` + `image_picker` added
+- ✅ `pubspec.yaml` — description updated, `shared_preferences` + `image_picker` + `http` added
 - ✅ `color_schemes.dart` — full Apple-inspired palette + `GlucoNavColors` utility class
 - ✅ `main.dart` — renamed to `GlucoNavApp`, scaffold background `#F5F5F7`
-- ❌ `onboarding_gluconav_page_body.dart` — Diabetes Type, HbA1c, Cuisine, Diet pickers
-- ❌ `gluconav_api_service.dart` — HTTP wrapper for FastAPI
-- ❌ Onboarding wired to `POST /api/v1/users/onboard`
-- ❌ `gluconav_dashboard_screen.dart` — AI Dashboard tab (sleep, glucose, meal type → recommendations)
-- ❌ `eating_sequence_sheet.dart` — Order-of-Eating pop-up for high-GI meals
+- ✅ `onboarding_gluconav_page_body.dart` — Diabetes Type, HbA1c, Cuisine, Diet pickers (4 ChoiceChip sections)
+- ✅ `gluconav_api_service.dart` — HTTP wrapper for FastAPI (onboardUser, getRecommendations, logFeedback, logGlucose)
+- ✅ `onboarding_screen.dart` — GlucoNav page inserted as page 5 (7-page flow)
+- ✅ `onboarding_bloc.dart` — Submit wired to `POST /api/v1/users/onboard` + `user_id` saved to SharedPreferences
+- ✅ `user_data_mask_entity.dart` — Extended with `diabetesType`, `hbA1cBand`, `cuisinePreference`, `dietType`
+- ✅ `gluconav_dashboard_screen.dart` — AI Dashboard tab: sleep slider, glucose field, meal/exercise recommendation cards, context warning banner, coach mode chip. Wired as 4th tab ("AI Suggest") in `main_screen.dart`. BLoC registered in `locator.dart`.
+- ✅ `eating_sequence_sheet.dart` — Order-of-Eating pop-up for high-GI meals. Triggered via `DayInfoWidget` tap.
 
 > **Note:** We use OpenNutriTracker (ONT) as the Flutter base. ONT provides meal logging, food search, barcode scanner, diary, and activity tracking. GlucoNav innovations (AI recommendations, eating order advice) are layered on top as new BLoC-based features. BLoC/Provider/Hive are kept (NOT Riverpod). Frontend project root: `frontend/OpenNutriTracker/`
 
