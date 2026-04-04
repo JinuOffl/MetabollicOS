@@ -1,6 +1,6 @@
 # GlucoNav — Team Plan
 > **For Medathon 2026 | Team Innofusion**
-> Last updated: 2026-04-04
+> Last updated: 2026-04-05
 
 ---
 
@@ -10,7 +10,9 @@
 | ------------ | ----------------- | ---------------------------------------------------------- |
 | **Member J** | ML Engineer       | Recommendation Engine (LightFM, data, prediction services) |
 | **Member K** | Backend Engineer  | FastAPI, Vision AI, Burnout service, DB models             |
-| **Member L** | Frontend Engineer | Flutter UI, all screens, Riverpod providers, API wiring    |
+| **Member L** | Frontend Engineer | Flutter UI, all screens, BLoC providers, API wiring        |
+
+> **Phases 3–6 split:** Member K owns all backend tracks; Member L owns all frontend/UI tracks. Both work in parallel and integrate in Phase 6.5.
 
 ---
 
@@ -120,50 +122,101 @@
 
 ---
 
-## PHASE 3 — Sequence Navigator (Member K — Vision backend; Member L — UI)
+## ╔ PARALLEL DEVELOPMENT — Phase 3 → Phase 5 ╗
+> ⚡ **Member K and Member L work fully independently on their own track.  
+> No blocking dependencies between K-Track and L-Track until Phase 6.5.**  
+> - **K-Track** = all backend services + API endpoints  
+> - **L-Track** = all Flutter screens + UI logic (use hardcoded mock JSON until integration)
 
-### K4 — Vision + LLM Backend
-- [ ] **K4.1** — `services/vision_service.py` — ViT food detection (DrishtiSharma HuggingFace model)
+---
+
+## ║ K-TRACK — Backend: Phases 3–5 (Member K works independently) ║
+
+### K4 — Vision + LLM Backend (Phase 3 — Backend)
+- [/] **K4.1** — `services/vision_service.py` — ViT food detection (DrishtiSharma HuggingFace model)
 - [ ] **K4.2** — `services/sequence_service.py` — Gemini 1.5 Flash eating sequence generation
 - [ ] **K4.3** — `routers/vision.py` — `POST /api/v1/analyze-meal`
 
-**✅ K4 Done When:** POST `/analyze-meal` with an image returns `detected_items` + `eating_sequence` JSON
+**✅ K4 Done When:** `POST /api/v1/analyze-meal` with an image returns `{detected_items, eating_sequence}` JSON
 
-### L6 — Sequence Navigator UI
-- [ ] **L6.1** — `screens/sequence/camera_screen.dart` — image_picker (camera + gallery) → loading → POST
-- [ ] **L6.2** — `screens/sequence/sequence_overlay_screen.dart` — meal photo + numbered badges
-- [ ] **L6.3** — Numbered list (food name + reason per step)
-- [ ] **L6.4** — Spike comparison cards ("Without: +67" vs "With: +24") + "Start eating!" button
+### K5 — Spike Risk Service (Phase 4 — Backend)
+- [ ] **K5.1** — `services/context_service.py` — `calculate_spike_risk(gi, sleep_score, steps, current_glucose)` returning risk level (low/medium/high)
+- [ ] **K5.2** — Wire `calculate_spike_risk()` into `GET /api/v1/recommend/{user_id}` response payload as `spike_risk` field
 
-**✅ Phase 3 Done When:** "Scan My Plate" → numbered overlay on photo with spike comparison stats
+**✅ K5 Done When:** `/recommend` response includes `spike_risk` field; context_service unit-tested
 
----
+### K6 — Burnout Shield Backend (Phase 5 — Backend)
+- [ ] **K6.1** — `services/burnout_service.py` — `calculate_burnout_score()` using skipped interactions + consecutive HIIT days
+- [ ] **K6.2** — `get_coach_mode(burnout_score)` → returns `"active"` / `"balanced"` / `"supportive"`
+- [ ] **K6.3** — Include `coach_mode` + `burnout_score` in `GET /api/v1/recommend/{user_id}` response
 
-## PHASE 4 — Post-Meal Engine / Activity Snack (Member K + Member L)
+**✅ K6 Done When:** `/recommend` response includes `coach_mode` and `burnout_score`; tested with Swagger UI
 
-### K5 — Spike Risk Service
-- [ ] **K5.1** — `services/context_service.py` — `calculate_spike_risk()` (GI, sleep, steps, current glucose)
+### K7 — Backend Demo Seeds (Phase 6 — Backend)
+- [ ] **K7.1** — `scripts/seed_demo.py` — seed `demo_user_new` (no interaction history)
+- [ ] **K7.2** — Seed `demo_user_experienced` (14-day simulated interactions via data_generator)
+- [ ] **K7.3** — Verify `/recommend/demo_user_new` vs `/recommend/demo_user_experienced` return visibly different results
 
-### L7 — Activity Snack UI
-- [ ] **L7.1** — 20-min post-meal background timer after "Log this meal" tap
-- [ ] **L7.2** — `screens/activity/activity_snack_screen.dart` — exercise card at 20-min mark
-- [ ] **L7.3** — "Done!" → log `exercise_interaction` → update streak
-
----
-
-## PHASE 5 — Burnout Shield (Member K + Member L)
-
-### K6 — Burnout Backend
-- [ ] **K6.1** — `services/burnout_service.py` — `calculate_burnout_score()` + `get_coach_mode()`
-- [ ] **K6.2** — Include `coach_mode` in `/recommend` response payload
-
-### L8 — Burnout Frontend
-- [ ] **L8.1** — Read `coach_mode` from recommendation response
-- [ ] **L8.2** — Supportive mode UI: softer language, no red warnings, encouraging emojis
+**✅ K-Track Done When:** All K4–K7 tasks checked. Backend is fully integration-ready.**
 
 ---
 
-## PHASE 6 — Demo Preparation (All three)
+## ║ L-TRACK — Frontend: Phases 3–5 (Member L works independently) ║
+
+> 💡 Use hardcoded mock JSON responses while K-Track is incomplete. Replace with real API calls in Phase 6.5.
+
+### L6 — Sequence Navigator UI (Phase 3 — Frontend)
+- [ ] **L6.1** — `screens/sequence/camera_screen.dart` — image_picker (camera + gallery) → loading spinner → mock POST
+- [ ] **L6.2** — `screens/sequence/sequence_overlay_screen.dart` — display meal photo + numbered badges over food items
+- [ ] **L6.3** — Numbered step list (food name + reason per step: e.g. "1. Salad — start with fiber")
+- [ ] **L6.4** — Spike comparison cards ("Without order: +67 mg/dL" vs "With order: +24 mg/dL") + "Start Eating!" CTA button
+- [ ] **L6.5** — Wire "Scan My Plate" entry point from `gluconav_dashboard_screen.dart`
+
+**✅ L6 Done When:** Full UI flow works with mock JSON: camera → overlay → sequence list → comparison cards
+
+### L7 — Activity Snack UI (Phase 4 — Frontend)
+- [ ] **L7.1** — 20-min post-meal background timer triggered after "Log this meal" tap (use `Timer` + in-app snackbar at T+20)
+- [ ] **L7.2** — `screens/activity/activity_snack_screen.dart` — exercise card appears at 20-min mark (exercise name, duration, glucose benefit badge)
+- [ ] **L7.3** — "Done!" button → call `gluconav_api_service.logFeedback(exercise_id)` → trigger streak +1 update in BLoC
+- [ ] **L7.4** — Integrate `spike_risk` field from mock recommendation response to conditionally show urgency level on card
+
+**✅ L7 Done When:** Tapping "Log meal" starts timer; at 20 min, Activity Snack screen appears with correct exercise
+
+### L8 — Burnout Shield Frontend (Phase 5 — Frontend)
+- [ ] **L8.1** — Read `coach_mode` + `burnout_score` from recommendation response (mock)
+- [ ] **L8.2** — `active` mode: normal UI with performance badges
+- [ ] **L8.3** — `balanced` mode: neutral language, hide streak pressure indicators
+- [ ] **L8.4** — `supportive` mode: softer copy ("You're doing great 💚"), hide red warnings, show encouraging emojis
+- [ ] **L8.5** — Animate coach-mode chip in `gluconav_dashboard_screen.dart` app bar
+
+**✅ L8 Done When:** Changing `coach_mode` in mock JSON visibly changes app tone across all recommendation screens
+
+### L9 — Frontend Demo Polish (Phase 6 — Frontend)
+- [ ] **L9.1** — Test complete 8-step demo script flow in Chrome
+- [ ] **L9.2** — Trends screen: display 71% Time-in-Range + 12-day streak badge
+- [ ] **L9.3** — Fix any UI jank, loading states, or missing error states
+
+**✅ L-Track Done When:** All L6–L9 tasks checked. Frontend demo flows without errors.**
+
+---
+
+## PHASE 6.5 — Integration (Member K + Member L — do TOGETHER after both tracks are done)
+
+> 🔗 **This phase happens once K-Track AND L-Track are both complete. Both members work together.**
+
+- [ ] **I1.1** — Replace all L-Track mock JSON with real API calls in `gluconav_api_service.dart`
+  - `POST /api/v1/analyze-meal` → replace camera screen mock
+  - `GET /api/v1/recommend/{user_id}` → ensure `spike_risk` + `coach_mode` + `burnout_score` fields consumed
+- [ ] **I1.2** — End-to-end test: Onboarding → Dashboard → Scan Plate → Sequence → Log Meal → Activity Snack
+- [ ] **I1.3** — End-to-end test: Demo user new vs experienced (personalization delta visible)
+- [ ] **I1.4** — CORS / network errors resolved between Flutter web and FastAPI
+- [ ] **I1.5** — `flutter run -d chrome` + `python run.py` — full app works together
+
+**✅ Integration Done When:** All I1.x tasks checked; full 8-step demo runs without mocks.**
+
+---
+
+## PHASE 6 — Demo Preparation (All three — after Integration)
 
 - [ ] **S1.1** — Seed `demo_user_new` (zero interaction history → generic recommendations)
 - [ ] **S1.2** — Seed `demo_user_experienced` (14-day history → personalized recommendations)
@@ -179,15 +232,29 @@ Phase 0 (Shared Setup — all three)
   ↓
 Phase 1 (J: ML Engine — standalone, no API/Flutter needed)
   ↓
-Phase 2 (K: FastAPI  +  L: Flutter — run in parallel, J supports integration)
+Phase 2 (K: FastAPI  +  J: Flutter Integration — run in parallel)
   ↓
-Phase 3 (K: Vision+LLM  +  L: Sequence UI — parallel)
+╔══════════════════════════════════════════════════════════════╗
+║      PARALLEL DEVELOPMENT (Phase 3 → Phase 5)               ║
+║                                                              ║
+║  Member K (Backend):        Member L (Frontend):             ║
+║  ┌─────────────────┐        ┌─────────────────┐             ║
+║  │ K4: Vision+LLM  │        │ L6: Sequence UI  │             ║
+║  │   Backend       │        │   (mock data)    │             ║
+║  ├─────────────────┤        ├─────────────────┤             ║
+║  │ K5: Spike Risk  │        │ L7: Activity     │             ║
+║  │   Service       │        │   Snack UI       │             ║
+║  ├─────────────────┤        ├─────────────────┤             ║
+║  │ K6: Burnout     │        │ L8: Burnout      │             ║
+║  │   Backend       │        │   Shield UI      │             ║
+║  ├─────────────────┤        ├─────────────────┤             ║
+║  │ K7: Demo Seeds  │        │ L9: Demo Polish  │             ║
+║  └─────────────────┘        └─────────────────┘             ║
+╚══════════════════════════════════════════════════════════════╝
+  ↓  (both tracks complete)
+Phase 6.5 (K + L together: Integration — replace mocks with real API calls)
   ↓
-Phase 4 (K: Spike risk service  +  L: Post-meal timer UI)
-  ↓
-Phase 5 (K: Burnout backend  +  L: UI tone)
-  ↓
-Phase 6 (All: Demo prep)
+Phase 6 (All three: Demo Preparation, End-to-end Testing)
 ```
 
 ---
@@ -204,6 +271,7 @@ Phase 6 (All: Demo prep)
 | 6       | 2026-04-04 | J      | J5 complete: Diabetes Onboarding Extension. Created `onboarding_gluconav_page_body.dart` (4 pickers), integrated as page 5 in flow, extended `UserDataMaskEntity`, created `gluconav_api_service.dart`, wired submit to FastAPI + SharedPreferences. |
 | 7       | 2026-04-04 | J      | J6 complete: AI Dashboard Screen wired. `GlucoNavDashboardBloc` registered in locator. `GlucoNavHomeScreen` added as 4th tab ("AI Suggest") in `main_screen.dart`. 4-tab nav: Home / Diary / AI Suggest / Profile.                                   |
 | 8       | 2026-04-04 | J      | J7 complete: Order-of-Eating Pop-up. Created `eating_sequence_sheet.dart` with a 3-step tutorial and estimated spike impact. Hooked into `DayInfoWidget` to trigger when users tap a logged meal with high carb ratio.                               |
+| 9       | 2026-04-05 | K+L    | TEAM_PLAN.md restructured for parallel development: Phases 3–5 split into K-Track (backend) and L-Track (frontend). Phase 6.5 (Integration) added as the merge point. K7/L9 demo tasks defined. Build Order diagram updated.                        |
 
 ---
 

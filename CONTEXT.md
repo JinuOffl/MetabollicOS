@@ -127,24 +127,25 @@ gluconav/
 
 > **Note:** We use OpenNutriTracker (ONT) as the Flutter base. ONT provides meal logging, food search, barcode scanner, diary, and activity tracking. GlucoNav innovations (AI recommendations, eating order advice) are layered on top as new BLoC-based features. BLoC/Provider/Hive are kept (NOT Riverpod). Frontend project root: `frontend/OpenNutriTracker/`
 
-### Phase 3 — Sequence Navigator (Order of Eating)
-- ❌ `vision_service.py` — ViT food detection (HuggingFace)
-- ❌ `sequence_service.py` — Gemini LLM eating sequence generation
-- ❌ `POST /api/v1/analyze-meal` endpoint
-- ❌ `camera_screen.dart` — image picker
-- ❌ `sequence_overlay_screen.dart` — numbered food overlay + spike comparison
+### Phase 3 — Sequence Navigator (Parallel: K & L)
+- ❌ **K:** `vision_service.py` — ViT food detection (HuggingFace)
+- ❌ **K:** `sequence_service.py` — Gemini LLM eating sequence generation
+- ❌ **K:** `POST /api/v1/analyze-meal` endpoint
+- ❌ **L:** `camera_screen.dart` — image picker
+- ❌ **L:** `sequence_overlay_screen.dart` — numbered food overlay + spike comparison
 
-### Phase 4 — Post-Meal Engine (Activity Snack)
-- ❌ `context_service.py` — `calculate_spike_risk()` function
-- ❌ Flutter 20-min post-meal timer
-- ❌ Activity Snack card UI + exercise interaction logging
+### Phase 4 — Post-Meal Engine (Parallel: K & L)
+- ❌ **K:** `context_service.py` — `calculate_spike_risk()` function
+- ❌ **L:** Flutter 20-min post-meal timer
+- ❌ **L:** Activity Snack card UI + exercise interaction logging
 
-### Phase 5 — Burnout Shield
-- ❌ `burnout_service.py` — burnout score calculation
-- ❌ Coach mode logic (active / balanced / supportive)
-- ❌ Flutter UI tone adjustment based on coach_mode
+### Phase 5 — Burnout Shield (Parallel: K & L)
+- ❌ **K:** `burnout_service.py` — burnout score calculation
+- ❌ **K:** Coach mode logic (active / balanced / supportive)
+- ❌ **L:** Flutter UI tone adjustment based on coach_mode
 
-### Demo Preparation
+### Phase 6 — Integration & Demo Preparation
+- ❌ Integration between FastAPI endpoints (K) and Flutter views (L)
 - ❌ `demo_user_new` seeded (zero history — generic recommendations)
 - ❌ `demo_user_experienced` seeded (14-day simulated history — personalized)
 - ❌ End-to-end demo flow tested
