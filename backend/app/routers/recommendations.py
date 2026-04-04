@@ -2,9 +2,11 @@
 routers/recommendations.py
 GET /api/v1/recommend/{user_id}
 
-Updated:
-  K5.2 — adds spike_risk from context_service.calculate_spike_risk()
-  K6.3 — adds coach_mode + burnout_score from burnout_service.get_burnout_from_db()
+K5.2 — adds spike_risk from context_service.calculate_spike_risk()
+K6.3 — adds coach_mode + burnout_score from burnout_service.get_burnout_from_db()
+
+Field normalisation: diet_engine / exercise_engine use internal naming;
+_normalize_* helpers bridge them to the Pydantic schema field names.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -22,6 +24,68 @@ from app.services.burnout_service import get_burnout_from_db
 router = APIRouter(prefix="/recommend", tags=["Recommendations"])
 
 
+# ── Field-name normalizers ────────────────────────────────────────────────────
+
+def _normalize_diet_item(d: dict) -> dict:
+    """
+    Bridge diet_engine internal keys → DietRecommendation schema keys.
+    diet_engine returns: meal_id, name, cuisine, meal_type,
+                         predicted_spike_mg, is_vegetarian, reason, score
+    schema expects:      meal_id, name, cuisine, predicted_glucose_delta,
+                         predicted_spike_mgdl (legacy), gi, gl, reason, tags
+    """
+    spike = d.get("predicted_spike_mg") or d.get("predicted_glucose_delta")
+    return {
+        "meal_id":                 d.get("meal_id", ""),
+        "name":                    d.get("name", ""),
+        "cuisine":                 d.get("cuisine"),
+        "predicted_glucose_delta": spike,
+        "predicted_spike_mgdl":    spike,      # legacy alias
+        "gi":                      d.get("gi") or d.get("glycemic_index"),
+        "gl":                      d.get("gl"),
+        "reason":                  d.get("reason") or d.get("rationale"),
+        "rationale":               d.get("reason") or d.get("rationale"),  # legacy alias
+        "tags":                    d.get("tags", []),
+    }
+
+
+def _normalize_exercise_item(d: dict) -> dict:
+    """
+    Bridge exercise_engine internal keys → ExerciseRecommendation schema keys.
+    exercise_engine returns: exercise_id, name, exercise_type, duration_min,
+                             glucose_drop_mg, burnout_cost, timing, reason, score
+    schema expects:          exercise_id, name, type, duration_minutes,
+                             glucose_benefit_mg_dl, burnout_cost, met, timing,
+                             reason, duration (legacy), glucose_drop_mgdl (legacy)
+    """
+    glucose = (
+        d.get("glucose_drop_mg")
+        or d.get("glucose_benefit_mg_dl")
+        or d.get("glucose_drop_mgdl")
+    )
+    duration = (
+        d.get("duration_min")
+        or d.get("duration_minutes")
+        or d.get("duration")
+    )
+    return {
+        "exercise_id":         d.get("exercise_id", ""),
+        "name":                d.get("name", ""),
+        "type":                d.get("exercise_type") or d.get("type"),
+        "duration_minutes":    duration,
+        "duration":            duration,          # legacy alias
+        "glucose_benefit_mg_dl": glucose,
+        "glucose_drop_mgdl":   glucose,           # legacy alias
+        "burnout_cost":        d.get("burnout_cost"),
+        "met":                 d.get("met"),
+        "timing":              d.get("timing", "post_meal"),
+        "reason":              d.get("reason") or d.get("rationale"),
+        "rationale":           d.get("reason") or d.get("rationale"),  # legacy alias
+    }
+
+
+# ── Router ────────────────────────────────────────────────────────────────────
+
 @router.get("/{user_id}", response_model=RecommendResponse)
 def get_recommendations(
     user_id: str,
@@ -36,7 +100,7 @@ def get_recommendations(
     Get personalised diet + exercise recommendations for a user.
 
     Context params (gi, sleep_score, steps, current_glucose) are optional.
-    When provided, they are used to compute spike_risk and context_warning.
+    When provided they are used to compute spike_risk and context_warning.
     """
     # ── 1. Fetch user profile ─────────────────────────────────────────────
     profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
@@ -44,23 +108,23 @@ def get_recommendations(
         raise HTTPException(status_code=404, detail=f"User profile not found: {user_id}")
 
     profile_dict = {
-        "diabetes_type": profile.diabetes_type,
-        "regional_cuisine": profile.cuisine_preference,
-        "diet_preference": profile.diet_type,
-        "hba1c_band": profile.hba1c_band,
+        "diabetes_type":     profile.diabetes_type,
+        "regional_cuisine":  profile.cuisine_preference,
+        "diet_preference":   profile.diet_type,
+        "hba1c_band":        profile.hba1c_band,
     }
 
     # ── 2. Get diet + exercise recommendations ────────────────────────────
-    diet_list = get_diet_recommendations(profile_dict)
-    exercise_list = get_exercise_recommendations(profile_dict)
+    diet_raw      = get_diet_recommendations(profile_dict)
+    exercise_raw  = get_exercise_recommendations(profile_dict)
+
+    diet_list     = [_normalize_diet_item(d) for d in diet_raw]
+    exercise_list = [_normalize_exercise_item(e) for e in exercise_raw]
 
     # Use the top meal's GI for spike risk if no explicit gi param
     effective_gi = gi
     if effective_gi is None and diet_list:
-        first = diet_list[0]
-        effective_gi = getattr(first, "gi", None) or (
-            first.get("gi") if isinstance(first, dict) else None
-        )
+        effective_gi = diet_list[0].get("gi")
 
     # ── 3. K5.2 — Calculate spike risk ────────────────────────────────────
     spike_risk = calculate_spike_risk(
@@ -77,9 +141,9 @@ def get_recommendations(
     )
 
     # ── 4. K6.3 — Calculate burnout + coach mode ──────────────────────────
-    burnout_data = get_burnout_from_db(user_id=user_id, db=db)
+    burnout_data  = get_burnout_from_db(user_id=user_id, db=db)
     burnout_score = burnout_data["burnout_score"]
-    coach_mode = burnout_data["coach_mode"]
+    coach_mode    = burnout_data["coach_mode"]
 
     # ── 5. Build response ─────────────────────────────────────────────────
     return RecommendResponse(

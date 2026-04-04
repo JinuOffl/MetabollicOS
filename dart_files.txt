@@ -1,0 +1,8 @@
+C:\CHAINAIM3003\mcp-servers\Medathon\MetabollicOS\frontend\OpenNutriTracker\test\fixture\meal_entity_fixtures.dart
+C:\CHAINAIM3003\mcp-servers\Medathon\MetabollicOS\frontend\OpenNutriTracker\test\fixture\physical_activity_entity_fixtures.dart
+C:\CHAINAIM3003\mcp-servers\Medathon\MetabollicOS\frontend\OpenNutriTracker\test\fixture\user_entity_fixtures.dart
+C:\CHAINAIM3003\mcp-servers\Medathon\MetabollicOS\frontend\OpenNutriTracker\test\unit_test\calorie_goal_calc_test.dart
+C:\CHAINAIM3003\mcp-servers\Medathon\MetabollicOS\frontend\OpenNutriTracker\test\unit_test\intake_repository_test.dart
+C:\CHAINAIM3003\mcp-servers\Medathon\MetabollicOS\frontend\OpenNutriTracker\test\unit_test\met_calc_test.dart
+C:\CHAINAIM3003\mcp-servers\Medathon\MetabollicOS\frontend\OpenNutriTracker\test\unit_test\tdee_calc_test.dart
+C:\CHAINAIM3003\mcp-servers\Medathon\MetabollicOS\frontend\OpenNutriTracker\test\widget_test\widget_test.dart

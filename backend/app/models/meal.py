@@ -4,6 +4,7 @@ import datetime
 import uuid
 from app.database import Base
 
+
 class Meal(Base):
     __tablename__ = "meals"
 
@@ -20,13 +21,13 @@ class Meal(Base):
     prep_time = Column(Integer)
     tags = Column(String)
 
+
 class MealInteraction(Base):
     __tablename__ = "meal_interactions"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     user_id = Column(String, ForeignKey("users.id"), index=True)
-    meal_id = Column(String, ForeignKey("meals.id"), index=True)
-    interaction_type = Column(String) # e.g. 'logged', 'ignored'
+    meal_id = Column(String, index=True)  # soft reference — no FK to allow CSV-only meals
+    interaction_type = Column(String)     # "completed" | "skipped" | "logged"
+    glucose_delta = Column(Float, nullable=True)  # post-meal glucose rise in mg/dL
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
-    
-    meal = relationship("Meal")

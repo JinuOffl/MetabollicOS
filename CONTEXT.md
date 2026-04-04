@@ -3,227 +3,151 @@
 > Last updated: 2026-04-05
 
 ## Team
-| Member | Role                                                              |
-| ------ | ----------------------------------------------------------------- |
-| **J**  | ML Engineer — Recommendation Engine (LightFM, data, prediction)   |
-| **K**  | Backend Engineer — FastAPI, Vision AI, Burnout service, DB models |
-| **L**  | Frontend Engineer — Flutter UI, all screens, BLoC providers, API wiring |
+| Member | Role |
+| ------ | ---- |
+| **J**  | ML Engineer — Recommendation Engine |
+| **K**  | Backend Engineer — FastAPI, Vision AI, Burnout |
+| **L**  | Frontend Engineer — Flutter UI, BLoC |
 
 ---
 
-## What Is GlucoNav?
+## Current State — PHASE 6 DEMO PREP ✅
 
-A **personalized metabolic recommendation engine** for Indian diabetic patients.  
-NOT a calorie tracker — it learns each user's unique glucose response patterns (like Netflix, but for blood sugar) and recommends:
-- **What to eat** (ranked by predicted glucose spike for *that* user)
-- **In what order** (Fiber → Protein → Carbs = 38–73% spike reduction)
-- **What micro-exercise** to do after meals to flatten the spike
-
-**Target:** 101 million Indians with diabetes, designed for South Asian ThinFat phenotype, Indian regional cuisines, basic glucometers (no CGM needed).
+**Both tracks complete. Integration complete. Demo data ready. Rehearse → Present.**
 
 ---
 
-## Tech Stack
+## All Backend Files — Status
 
-| Layer                 | Technology                                                               |
-| --------------------- | ------------------------------------------------------------------------ |
-| Frontend              | Flutter (Dart) — Android + iOS + Web                                     |
-| Backend               | FastAPI (Python 3.11)                                                    |
-| Recommendation Engine | LightFM 1.17 (Matrix Factorization)                                      |
-| Food Vision AI        | `DrishtiSharma/finetuned-ViT-IndianFood-Classification-v3` (HuggingFace) |
-| LLM (Eating Sequence) | Gemini 1.5 Flash via `google-generativeai`                               |
-| Database              | SQLite (dev) → PostgreSQL (prod) via SQLAlchemy                          |
-| State Management      | BLoC / Provider / Hive (OpenNutriTracker base — NOT Riverpod)            |
+| File | Status | Notes |
+|------|--------|-------|
+| `models/user.py` | ✅ Fixed | Added `email`, `name`, `age`, `weight_kg`, `height_cm` |
+| `models/meal.py` | ✅ Fixed | Added `glucose_delta` to `MealInteraction`; soft FK (no hard DB ref) |
+| `models/exercise.py` | ✅ Fixed | Soft FK for `exercise_id` |
+| `models/glucose.py` | ✅ Fixed | Added `glucose_mgdl` column; keeps `value_mgdl` alias |
+| `schemas/feedback.py` | ✅ Fixed | Added `user_id` to `FeedbackRequest` |
+| `schemas/glucose.py` | ✅ Fixed | Accepts both `glucose_mgdl` (Flutter) + `value_mgdl` (legacy) |
+| `routers/feedback.py` | ✅ Fixed | Sets `user_id` on `MealInteraction` + `ExerciseInteraction` |
+| `routers/glucose.py` | ✅ Fixed | Writes both `glucose_mgdl` + `value_mgdl` |
+| `routers/vision.py` | ✅ | Accepts `application/octet-stream` (Flutter web) |
+| `routers/recommendations.py` | ✅ | Field normalizers; spike_risk; coach_mode; burnout_score |
+| `services/vision_service.py` | ✅ | ViT lazy-load; stub fallback |
+| `services/sequence_service.py` | ✅ | Gemini 1.5 Flash; stub fallback |
+| `services/context_service.py` | ✅ | 4-factor spike_risk scoring |
+| `services/burnout_service.py` | ✅ | burnout_score; coach_mode; get_burnout_from_db |
+| `scripts/seed_demo.py` | ✅ Fixed | All 5 bugs fixed; idempotent re-runs |
+| `scripts/verify_demo.py` | ✅ NEW | 11 automated checks; run after seeding |
 
 ---
 
-## Project Structure
+## All Frontend Files — Status
 
+Flutter project root: `frontend/OpenNutriTracker/lib/`
+
+| File | Status |
+|------|--------|
+| `main.dart` | ✅ 4-tab shell, async SharedPreferences init, Diary demo shortcuts |
+| `core/gluconav_colors.dart` | ✅ Brand palette + coach-mode/spike helpers |
+| `models/sequence_result.dart` | ✅ DetectedItem, EatingStep, SequenceResult |
+| `models/recommendation_response.dart` | ✅ DietRecommendation, ExerciseRecommendation, RecommendResponse |
+| `services/gluconav_api_service.dart` | ✅ Real API + mock fallback; userId SharedPreferences |
+| `features/gluconav_dashboard/` | ✅ BLoC + screen: coach mode, spike risk, Scan My Plate |
+| `features/sequence/camera_screen.dart` | ✅ image_picker + analyzeImageBytes → overlay |
+| `features/sequence/sequence_overlay_screen.dart` | ✅ badges, steps, spike comparison, Start Eating! |
+| `features/activity/activity_snack_bloc.dart` | ✅ 20-min Timer BLoC |
+| `features/activity/activity_snack_screen.dart` | ✅ countdown ring, exercise card, Done!, spike_risk urgency |
+| `features/trends/gluconav_trends_screen.dart` | ✅ 71% TiR donut, streak, bars, personalization proof |
+
+---
+
+## Demo Preparation Status
+
+### S1.1 ✅ — seed_demo.py fixed and ready
+**Bugs fixed (5 total):**
+1. `User(user_id=...)` → `User(id=...)` — field name mismatch
+2. `User.user_id` → `User.id` — query field mismatch  
+3. `UserProfile(age=..., weight_kg=..., height_cm=...)` — fields not in model (now added)
+4. `MealInteraction(glucose_delta=...)` — field not in model (now added)
+5. `GlucoseReading(glucose_mgdl=...)` — field was `value_mgdl` (now both added)
+
+**Run:**
+```powershell
+cd backend
+python scripts/seed_demo.py
 ```
-gluconav/
-├── backend/
-│   ├── app/
-│   │   ├── main.py
-│   │   ├── config.py
-│   │   ├── database.py
-│   │   ├── models/         # user.py, meal.py, exercise.py, glucose.py
-│   │   ├── schemas/        # user.py, recommendation.py, feedback.py
-│   │   ├── routers/        # users, recommendations, feedback, meals, exercises, vision, glucose
-│   │   ├── services/       # recommendation_service, diet_engine, exercise_engine,
-│   │   │                   # context_service, burnout_service, vision_service, sequence_service
-│   │   └── ml/             # data_generator, feature_builder, train_diet, train_exercise
-│   ├── data/               # meals.csv, exercises.csv, synthetic_users.csv
-│   ├── tests/
-│   ├── .env
-│   ├── requirements.txt
-│   └── run.py
-└── frontend/
-    └── lib/
-        ├── main.dart
-        ├── router.dart
-        ├── models/
-        ├── providers/
-        ├── services/
-        └── screens/        # onboarding/, home/, sequence/, trends/, activity/
+**Expected output:** ✔ Created User: demo_user_new | ✔ Created User: demo_user_experienced | ✅ Delta confirmed
+
+### S1.2 ✅ — verify_demo.py created (11 automated checks)
+**Run:**
+```powershell
+python scripts/verify_demo.py
 ```
+Checks: user rows, profiles, interaction counts, glucose values, recommendation engine.
+
+### S1.3 ✅ — DEMO_SCRIPT.md created
+See `DEMO_SCRIPT.md` for full 8-step script with:
+- Timing per step
+- Exact talking points
+- Key stats to quote
+- Q&A cheat sheet for judges
+- Backup plan (mock data)
+- Coach mode demo
+
+### S1.4 ✅ — Personalization delta wired
+Diary tab has two buttons:
+- "Switch → demo_user_new" → cold start, generic recs
+- "Switch → demo_user_experienced" → personalized, lower spikes
+Expected delta: +54 mg/dL (new) vs +18 mg/dL (experienced) = **59% improvement**
+
+### S1.5 ❌ — Rehearse (team action required)
+Walk through `DEMO_SCRIPT.md` once end-to-end. Target: ≤ 5 minutes.
 
 ---
 
-## Current State — What's Done
+## How to Run
 
-> ✅ = Complete | 🔄 = In Progress | ❌ = Not Started
-
-### Foundation
-- ✅ `GlucoNav_Master_Prompt.md` — full spec written
-- ✅ Folder structure created
-- ✅ `backend/requirements.txt`
-- ✅ `frontend/pubspec.yaml`
-- ✅ `.env` file
-
-### Phase 1 — Recommendation Engine (Pure Python ML)
-- ✅ `data/meals.csv` — 65 Indian meals (GI, GL, macros, cuisine, tags)
-- ✅ `data/exercises.csv` — 30 exercises (burnout_cost, MET, timing) — re-saved with proper CSV quoting
-- ✅ `data/synthetic_users.csv` — 200 synthetic user profiles
-- ✅ `data/meal_interactions.csv` — 8,112 interaction rows (generated by data_generator.py)
-- ✅ `data/exercise_interactions.csv` — 3,973 interaction rows
-- ✅ `ml/data_generator.py` — generates interaction CSVs with glucose delta + context modifiers
-- ✅ `ml/feature_builder.py` — exports LightFM feature matrices (23 user / 24 meal / 24 exercise features)
-- ✅ `ml/train_diet.py` — LightFM diet model training
-- ✅ `ml/train_exercise.py` — LightFM exercise model training
-- ✅ `services/diet_engine.py` — diet recommendation prediction
-
-### 2. ML Engine (Phase 1)
-- **Framework**: LightFM (Hybrid Matrix Factorization).
-- **Loss**: `logistic` (optimized for single-threaded Windows environments).
-- **Features**: User (Diabetes type, Cuisine, HbA1c Band) + Item (GI, GL, Protein/Fiber).
-- **Services**: `diet_engine.py` and `exercise_engine.py` apply context-aware heuristics (Sleep/Glucose/Burnout) on top of ML scores.
-- **Verification**: Verified via `backend/test_recommend.py`.
-- ❌ `services/exercise_engine.py` — exercise recommendation prediction
-- ✅ DB Models: `user.py`, `meal.py`, `exercise.py`, `glucose.py`
-
-### Phase 2A — FastAPI Backend
-- ✅ `main.py` — FastAPI app with CORS (now includes vision router)
-- ✅ `POST /api/v1/users/onboard`
-- ✅ `GET /api/v1/recommend/{user_id}`
-- ✅ `POST /api/v1/feedback`
-- ✅ `POST /api/v1/glucose-reading`
-- ✅ `GET /api/v1/meals`
-- ✅ `GET /api/v1/exercises`
-- ✅ `POST /api/v1/analyze-meal` — Vision AI endpoint (K4.3 done)
-- ✅ Pydantic schemas: user, recommendation, feedback
-- ❌ Context service (`context_service.py`) — planned for K5
-
-### Phase 2B — Flutter App (OpenNutriTracker-based)
-- ✅ J0: App renamed → `GlucoNavApp`, GlucoNav Apple brand colors applied (`#0F6E56` teal, `#F5F5F7` canvas)
-- ✅ `pubspec.yaml` — description updated, `shared_preferences` + `image_picker` + `http` added
-- ✅ `color_schemes.dart` — full Apple-inspired palette + `GlucoNavColors` utility class
-- ✅ `main.dart` — renamed to `GlucoNavApp`, scaffold background `#F5F5F7`
-- ✅ `onboarding_gluconav_page_body.dart` — Diabetes Type, HbA1c, Cuisine, Diet pickers (4 ChoiceChip sections)
-- ✅ `gluconav_api_service.dart` — HTTP wrapper for FastAPI (onboardUser, getRecommendations, logFeedback, logGlucose)
-- ✅ `onboarding_screen.dart` — GlucoNav page inserted as page 5 (7-page flow)
-- ✅ `onboarding_bloc.dart` — Submit wired to `POST /api/v1/users/onboard` + `user_id` saved to SharedPreferences
-- ✅ `user_data_mask_entity.dart` — Extended with `diabetesType`, `hbA1cBand`, `cuisinePreference`, `dietType`
-- ✅ `gluconav_dashboard_screen.dart` — AI Dashboard tab: sleep slider, glucose field, meal/exercise recommendation cards, context warning banner, coach mode chip. Wired as 4th tab ("AI Suggest") in `main_screen.dart`. BLoC registered in `locator.dart`.
-- ✅ `eating_sequence_sheet.dart` — Order-of-Eating pop-up for high-GI meals. Triggered via `DayInfoWidget` tap.
-
-> **Note:** We use OpenNutriTracker (ONT) as the Flutter base. ONT provides meal logging, food search, barcode scanner, diary, and activity tracking. GlucoNav innovations (AI recommendations, eating order advice) are layered on top as new BLoC-based features. BLoC/Provider/Hive are kept (NOT Riverpod). Frontend project root: `frontend/OpenNutriTracker/`
-
-### ║ K-TRACK — Backend: Phases 3–5 (Member K, independent) ║
-
-#### Phase 3 — Vision + LLM Backend
-- ✅ `services/vision_service.py` — ViT food detection (K4.1)
-- ✅ `services/sequence_service.py` — Gemini 1.5 Flash eating sequence (K4.2)
-- ✅ `routers/vision.py` — `POST /api/v1/analyze-meal` (K4.3)
-
-#### Phase 4 — Spike Risk Service
-- ❌ `services/context_service.py` — `calculate_spike_risk()` + `spike_risk` in `/recommend` (K5.1–K5.2)
-
-#### Phase 5 — Burnout Backend
-- ❌ `services/burnout_service.py` — `calculate_burnout_score()` + `get_coach_mode()` (K6.1–K6.2)
-- ❌ `coach_mode` + `burnout_score` in `/recommend` response (K6.3)
-
-#### Phase 6 — Demo Seeds
-- ❌ `scripts/seed_demo.py` — demo_user_new + demo_user_experienced (K7.1–K7.3)
-
----
-
-### ║ L-TRACK — Frontend: Phases 3–5 (Member L, independent, uses mock JSON) ║
-
-#### Phase 3 — Sequence Navigator UI
-- ❌ `screens/sequence/camera_screen.dart` — image_picker + mock POST (L6.1)
-- ❌ `screens/sequence/sequence_overlay_screen.dart` — photo + numbered badges (L6.2–L6.3)
-- ❌ Spike comparison cards + "Start Eating!" CTA (L6.4)
-- ❌ "Scan My Plate" wired from dashboard (L6.5)
-
-#### Phase 4 — Activity Snack UI
-- ❌ 20-min post-meal background timer (L7.1)
-- ❌ `screens/activity/activity_snack_screen.dart` (L7.2–L7.4)
-
-#### Phase 5 — Burnout Shield UI
-- ❌ active / balanced / supportive tone modes (L8.1–L8.5)
-
-#### Phase 6 — Frontend Demo Polish
-- ❌ 8-step demo flow, trends screen, side-by-side comparison (L9.1–L9.3)
-
----
-
-### Phase 6.5 — Integration (K + L together, after both tracks done)
-- ❌ Replace L-Track mock JSON with real API calls (I1.1)
-- ❌ End-to-end connected testing (I1.2–I1.5)
-
-### Phase 6 — Demo Preparation (All three, after Integration)
-- ❌ `demo_user_new` + `demo_user_experienced` seeded and verified
-- ❌ 8-step demo script tested end-to-end
-- ❌ Side-by-side personalization comparison confirmed
-- ❌ Demo rehearsed for judges
-
----
-
-## Key Design Decisions / Notes
-
-1. **Cold Start** — LightFM handles this automatically via user feature vectors (diabetes type, diet, cuisine). No special logic needed.
-2. **No CGM Required** — Manual glucometer input. If no recent reading, use diabetes-type defaults (T2 fasting ≈ 130 mg/dL).
-3. **Food image overlay** — For hackathon, use approximate regions (top-left, center, bottom-right) for numbered badges, NOT pixel-precise bounding boxes.
-4. **Model Retraining** — Run `train_diet.py` manually after new interactions. No auto-retraining for hackathon.
-5. **Burnout Shield** — `coach_mode` is returned in every `/recommend` response; Flutter adjusts UI tone accordingly.
-6. **Demo proof point** — Show `demo_user_new` vs `demo_user_experienced` side-by-side. The delta in recommendation quality IS the demo.
-7. **Infrastructure Note** — **ML Environment**: Miniconda (`gluconav` environment) is **required** for `lightfm` stability on Windows.
-- **Database**: SQLite (`glunav.db`).
-- **Environment Variables**: Managed via `backend/.env`.
-
----
-
-## Brand Colors
-
-| Purpose        | Hex                      |
-| -------------- | ------------------------ |
-| Primary        | `#0F6E56` (deep teal)    |
-| Secondary      | `#1D9E75` (lighter teal) |
-| Background     | `#F8FFFE`                |
-| Spike Bad      | `#E24B4A` (red)          |
-| Spike Good     | `#0F6E56` (green)        |
-| Text Primary   | `#1A1A2E`                |
-| Text Secondary | `#6B7280`                |
-
----
-
-## Environment Variables
-
-```env
-GOOGLE_AI_KEY=your_gemini_api_key_here
-DATABASE_URL=sqlite:///./gluconav.db
-MODEL_PATH=app/ml/models/
-DEBUG=True
-VISION_USE_STUB=0   # Set to 1 to bypass HuggingFace + Gemini (local dev/testing)
+### Seed + verify (once):
+```powershell
+cd backend
+conda activate gluconav
+python scripts/seed_demo.py
+python scripts/verify_demo.py
 ```
 
+### Run backend:
+```powershell
+python run.py   # → http://localhost:8000
+```
+
+### Run frontend:
+```powershell
+cd frontend/OpenNutriTracker
+flutter run -d chrome
+```
+
+### VISION_USE_STUB:
+Set `VISION_USE_STUB=1` in `backend/.env` if HuggingFace ViT + Gemini aren't loaded — app will use stub food detection responses. All other features work identically.
+
 ---
 
-## Session Summary (Latest)
+## Key Design Decisions
 
-| Session | Date       | Member | Changes                                                                                                                                   |
-| ------- | ---------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| 9       | 2026-04-05 | K+L    | TEAM_PLAN.md fully restructured: parallel K-Track / L-Track from Phase 3→5, Phase 6.5 Integration added, Build Order diagram updated.     |
-| 10      | 2026-04-05 | K      | K4 complete: `vision_service.py` (ViT HuggingFace), `sequence_service.py` (Gemini 1.5 Flash), `routers/vision.py` (`POST /analyze-meal`), vision router wired into `main.py`. `VISION_USE_STUB` env flag added for local testing. |
+1. **Real → Mock fallback** — every API method tries real backend, falls back silently
+2. **userId defaults to `demo_user_experienced`** — personalized on first launch
+3. **Soft FKs** — `MealInteraction.meal_id` and `ExerciseInteraction.exercise_id` have no hard DB FK constraint; allows CSV-based meal IDs without loading meals into DB
+4. **Dual glucose field** — `glucose_mgdl` (Flutter native) + `value_mgdl` (legacy) both stored
+5. **VISION_USE_STUB=1** — bypasses ViT + Gemini for reliable demo
+6. **Coach mode demo** — change `'coach_mode'` in `_mockRecommend` const in service file, hot-reload
 
-*Update this file after every coding session. Mark tasks ✅ when done.*
+---
+
+## Session Summary
+
+| Session | Date | Member | Changes |
+| ------- | ---- | ------ | ------- |
+| 9  | 2026-04-05 | K+L | Parallel track restructure |
+| 10 | 2026-04-05 | K   | K4: vision pipeline |
+| 11 | 2026-04-05 | K   | K5–K7 + normalizer bug fix |
+| 12 | 2026-04-05 | L   | L6–L9: Flutter lib from scratch |
+| 13 | 2026-04-05 | K+L | Phase 6.5: real API integration |
+| 14 | 2026-04-05 | K+L | **Phase 6 Demo Prep.** Fixed 5 seed_demo.py bugs. Updated 4 models (user, meal, exercise, glucose). Fixed 2 schemas (feedback, glucose). Fixed 2 routers (feedback, glucose). Created verify_demo.py (11 checks). Created DEMO_SCRIPT.md (8-step demo, Q&A, key numbers). S1.1–S1.4 complete. |
