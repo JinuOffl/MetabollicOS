@@ -112,14 +112,18 @@ gluconav/
 - ❌ Pydantic schemas: user, recommendation, feedback
 - ❌ Context service (`context_service.py`)
 
-### Phase 2B — Flutter App
-- ❌ `main.dart` + `router.dart` + Riverpod setup
-- ❌ Dart models (user_profile, meal_recommendation, exercise_recommendation, glucose_reading)
-- ❌ Riverpod providers (user, recommendation, glucose)
-- ❌ API service (base HTTP client)
-- ❌ Onboarding screen (5-step form)
-- ❌ Home Dashboard screen (context input → recommendation cards)
-- ❌ Trends screen (fl_chart glucose graph, time-in-range, streak)
+### Phase 2B — Flutter App (OpenNutriTracker-based)
+- ✅ J0: App renamed → `GlucoNavApp`, GlucoNav Apple brand colors applied (`#0F6E56` teal, `#F5F5F7` canvas)
+- ✅ `pubspec.yaml` — description updated, `shared_preferences` + `image_picker` added
+- ✅ `color_schemes.dart` — full Apple-inspired palette + `GlucoNavColors` utility class
+- ✅ `main.dart` — renamed to `GlucoNavApp`, scaffold background `#F5F5F7`
+- ❌ `onboarding_gluconav_page_body.dart` — Diabetes Type, HbA1c, Cuisine, Diet pickers
+- ❌ `gluconav_api_service.dart` — HTTP wrapper for FastAPI
+- ❌ Onboarding wired to `POST /api/v1/users/onboard`
+- ❌ `gluconav_dashboard_screen.dart` — AI Dashboard tab (sleep, glucose, meal type → recommendations)
+- ❌ `eating_sequence_sheet.dart` — Order-of-Eating pop-up for high-GI meals
+
+> **Note:** We use OpenNutriTracker (ONT) as the Flutter base. ONT provides meal logging, food search, barcode scanner, diary, and activity tracking. GlucoNav innovations (AI recommendations, eating order advice) are layered on top as new BLoC-based features. BLoC/Provider/Hive are kept (NOT Riverpod). Frontend project root: `frontend/OpenNutriTracker/`
 
 ### Phase 3 — Sequence Navigator (Order of Eating)
 - ❌ `vision_service.py` — ViT food detection (HuggingFace)

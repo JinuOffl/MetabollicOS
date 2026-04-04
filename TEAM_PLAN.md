@@ -62,7 +62,7 @@
 
 ---
 
-## PHASE 2 — FastAPI Backend (Member K) + Flutter App (Member L)
+## PHASE 2 — FastAPI Backend (Member K) + Flutter Integration (Member J)
 
 ### K1 — DB Models
 - [ ] **K1.1** — `models/user.py` — User + UserProfile tables
@@ -89,36 +89,34 @@
 
 ---
 
-### L1 — Flutter Foundation
-- [ ] **L1.1** — `main.dart` — App entry with Riverpod `ProviderScope`
-- [ ] **L1.2** — `router.dart` — `go_router` routes (onboarding, home, sequence, trends, activity)
-- [ ] **L1.3** — Dart models: `user_profile.dart`, `meal_recommendation.dart`, `exercise_recommendation.dart`, `glucose_reading.dart`
+### J0 — Integrate OpenNutriTracker as Flutter Base
+> **Strategy:** Use `frontend/OpenNutriTracker/` as the active Flutter project; add GlucoNav screens as new features inside ONT's feature-first structure. Keep BLoC (not Riverpod) to match ONT's existing architecture.
 
-### L2 — Services & Providers
-- [ ] **L2.1** — `services/api_service.dart` — base HTTP client (base URL, headers, error handling)
-- [ ] **L2.2** — `services/recommendation_service.dart` — `fetchRecommendations()`
-- [ ] **L2.3** — `services/vision_service.dart` — `analyzeImage()` multipart POST
-- [ ] **L2.4** — `providers/user_provider.dart` — user state + SharedPreferences
-- [ ] **L2.5** — `providers/recommendation_provider.dart` — async recommendation state
-- [ ] **L2.6** — `providers/glucose_provider.dart` — glucose readings state
+- [x] **J0.1** — Rename app: `pubspec.yaml` (`name: gluconav`), `main.dart` (class rename, title), app description
+- [x] **J0.2** — Apply GlucoNav brand colors to `core/styles/color_schemes.dart` (`#0F6E56` primary teal, `#1D9E75` secondary)
+- [x] **J0.3** — Add `shared_preferences: ^2.3.2` to `pubspec.yaml`; run `flutter pub get`
+- [x] **J0.4** — Verify app boots with GlucoNav theme: `flutter run -d chrome`
 
-### L3 — Onboarding Screen
-- [ ] **L3.1** — `screens/onboarding/onboarding_screen.dart` — 5-step form (name/type, diet, cuisine, goal, HbA1c/activity)
-- [ ] **L3.2** — `screens/onboarding/profile_setup_screen.dart` — POST to `/users/onboard`, save user_id
+### J5 — Diabetes Onboarding Extension
+- [ ] **J5.1** — Create `onboarding_gluconav_page_body.dart` widget (Diabetes Type, HbA1c band, Cuisine, Diet — 4 pickers)
+- [ ] **J5.2** — Add the new page to `onboarding_screen.dart` flow (after current page 4, before overview)
+- [ ] **J5.3** — Extend `OnboardingBloc.userSelection` with `diabetesType`, `hbA1cBand`, `cuisinePreference`, `dietType`
+- [ ] **J5.4** — Create `gluconav_api_service.dart` (http wrapper: `onboardUser`, `getRecommendations`, `logFeedback`, `logGlucose`)
+- [ ] **J5.5** — Wire onboarding submit → `POST /api/v1/users/onboard` → save `user_id` to SharedPreferences
 
-### L4 — Home Dashboard Screen
-- [ ] **L4.1** — `screens/home/home_screen.dart` — sleep slider + meal type selector
-- [ ] **L4.2** — Meal recommendation card widget (name, predicted spike badge, reason, "Log" button)
-- [ ] **L4.3** — Exercise recommendation card widget (name, duration, glucose drop badge, "Done" button)
-- [ ] **L4.4** — Context warning banner (e.g. "Poor sleep detected")
+### J6 — GlucoNav AI Dashboard Screen
+- [ ] **J6.1** — Create `gluconav_dashboard_bloc.dart` (events: `LoadDashboard`, `UpdateContext`; states: Loading/Loaded/Error)
+- [ ] **J6.2** — Create `gluconav_dashboard_screen.dart` (sleep slider, glucose field, meal type toggle)
+- [ ] **J6.3** — Meal + Exercise recommendation card widgets (spike badge, reason, "Done" button)
+- [ ] **J6.4** — Context warning banner + Coach mode chip in app bar
+- [ ] **J6.5** — Wire as 4th tab ("AI Suggest" icon) in `core/presentation/main_screen.dart`
 
-### L5 — Trends Screen
-- [ ] **L5.1** — `screens/trends/trends_screen.dart` — 7-day glucose line chart (fl_chart)
-- [ ] **L5.2** — Time-in-Range percentage (goal: >70% in 70–180 mg/dL)
-- [ ] **L5.3** — Consistency streak counter
-- [ ] **L5.4** — Last 5 meal interactions with outcome badges
+### J7 — Order-of-Eating Pop-up
+- [ ] **J7.1** — Create `eating_sequence_sheet.dart` (`DraggableScrollableSheet`, numbered steps: 🥗→🥩→🍚)
+- [ ] **J7.2** — Add spike comparison display: "Without order: +67 mg/dL" vs "With order: +24 mg/dL"
+- [ ] **J7.3** — Trigger sheet from `diary_page.dart` when logged meal's carb ratio indicates high-GI
 
-**✅ L-Phase 2 Done When:** App shows real recommendations from K's backend; logging a meal works end-to-end
+**✅ J-Phase 2 Done When:** App shows GlucoNav teal theme; onboarding collects diabetes fields and registers user; "AI Suggest" tab shows real recommendations from FastAPI; high-carb meal log triggers eating order sheet
 
 ---
 
@@ -196,12 +194,13 @@ Phase 6 (All: Demo prep)
 
 ## Session Log
 
-| Session | Date       | Member | What was done                                                                                                                                                                                                            |
-| ------- | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1       | 2026-04-04 | J      | Phase 0: Shared setup complete. Folder structure, backend (FastAPI/SQLAlchemy) and frontend (Flutter) boilerplates created. SQLite initialized. Dependency installation verified (noting lightfm requires C++ compiler). |
-| 2       | 2026-04-04 | J      | J1 complete: meals.csv (65 rows), exercises.csv (30 rows), synthetic_users.csv (200 rows) all verified. Seed data ready for J2.                                                                                          |
-| 3       | 2026-04-04 | J      | J2 complete: data_generator.py (8112 meal + 3973 exercise interactions), feature_builder.py (23 user / 24 meal / 24 exercise features). exercises.csv re-saved with proper quoting.                                      |
-| 4       | 2026-04-04 | J      | Phase 1 complete: J3 (Model Training) and J4 (Prediction Services) finished. Models trained with logistic loss and verified with test_recommend.py.                                                                      |
+| Session | Date       | Member | What was done                                                                                                                                                                                                                 |
+| ------- | ---------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1       | 2026-04-04 | J      | Phase 0: Shared setup complete. Folder structure, backend (FastAPI/SQLAlchemy) and frontend (Flutter) boilerplates created. SQLite initialized. Dependency installation verified (noting lightfm requires C++ compiler).      |
+| 2       | 2026-04-04 | J      | J1 complete: meals.csv (65 rows), exercises.csv (30 rows), synthetic_users.csv (200 rows) all verified. Seed data ready for J2.                                                                                               |
+| 3       | 2026-04-04 | J      | J2 complete: data_generator.py (8112 meal + 3973 exercise interactions), feature_builder.py (23 user / 24 meal / 24 exercise features). exercises.csv re-saved with proper quoting.                                           |
+| 4       | 2026-04-04 | J      | Phase 1 complete: J3 (Model Training) and J4 (Prediction Services) finished. Models trained with logistic loss and verified with test_recommend.py.                                                                           |
+| 5       | 2026-04-04 | J      | Phase 2 replanned: OpenNutriTracker (ONT) adopted as Flutter base. New tasks J0/J5/J6/J7 defined. TEAM_PLAN.md and implementation_plan.md updated. ONT uses BLoC/Provider/Hive — GlucoNav features added as new ONT features. |
 
 ---
 
