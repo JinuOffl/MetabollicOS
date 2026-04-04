@@ -133,14 +133,14 @@
 ## ║ K-TRACK — Backend: Phases 3–5 (Member K works independently) ║
 
 ### K4 — Vision + LLM Backend (Phase 3 — Backend)
-- [/] **K4.1** — `services/vision_service.py` — ViT food detection (DrishtiSharma HuggingFace model)
-- [ ] **K4.2** — `services/sequence_service.py` — Gemini 1.5 Flash eating sequence generation
-- [ ] **K4.3** — `routers/vision.py` — `POST /api/v1/analyze-meal`
+- [x] **K4.1** — `services/vision_service.py` — ViT food detection (DrishtiSharma HuggingFace model)
+- [x] **K4.2** — `services/sequence_service.py` — Gemini 1.5 Flash eating sequence generation
+- [x] **K4.3** — `routers/vision.py` — `POST /api/v1/analyze-meal`
 
 **✅ K4 Done When:** `POST /api/v1/analyze-meal` with an image returns `{detected_items, eating_sequence}` JSON
 
 ### K5 — Spike Risk Service (Phase 4 — Backend)
-- [ ] **K5.1** — `services/context_service.py` — `calculate_spike_risk(gi, sleep_score, steps, current_glucose)` returning risk level (low/medium/high)
+- [/] **K5.1** — `services/context_service.py` — `calculate_spike_risk(gi, sleep_score, steps, current_glucose)` returning risk level (low/medium/high)
 - [ ] **K5.2** — Wire `calculate_spike_risk()` into `GET /api/v1/recommend/{user_id}` response payload as `spike_risk` field
 
 **✅ K5 Done When:** `/recommend` response includes `spike_risk` field; context_service unit-tested
@@ -218,10 +218,13 @@
 
 ## PHASE 6 — Demo Preparation (All three — after Integration)
 
-- [ ] **S1.1** — Seed `demo_user_new` (zero interaction history → generic recommendations)
-- [ ] **S1.2** — Seed `demo_user_experienced` (14-day history → personalized recommendations)
+> ⚠️ S1.1 and S1.2 require K7 (backend demo seeds) to be done first.
+
+- [ ] **S1.1** — Seed `demo_user_new` (zero interaction history → generic recommendations) ← requires K7.1
+- [ ] **S1.2** — Seed `demo_user_experienced` (14-day history → personalized recommendations) ← requires K7.2
 - [ ] **S1.3** — Test 8-step demo script end-to-end
-- [ ] **S1.4** — Side-by-side comparison: new vs experienced user recommendations
+- [ ] **S1.4** — Side-by-side comparison: new vs experienced user recommendations confirmed
+- [ ] **S1.5** — Record / rehearse demo flow for judges
 
 ---
 
@@ -272,6 +275,7 @@ Phase 6 (All three: Demo Preparation, End-to-end Testing)
 | 7       | 2026-04-04 | J      | J6 complete: AI Dashboard Screen wired. `GlucoNavDashboardBloc` registered in locator. `GlucoNavHomeScreen` added as 4th tab ("AI Suggest") in `main_screen.dart`. 4-tab nav: Home / Diary / AI Suggest / Profile.                                   |
 | 8       | 2026-04-04 | J      | J7 complete: Order-of-Eating Pop-up. Created `eating_sequence_sheet.dart` with a 3-step tutorial and estimated spike impact. Hooked into `DayInfoWidget` to trigger when users tap a logged meal with high carb ratio.                               |
 | 9       | 2026-04-05 | K+L    | TEAM_PLAN.md restructured for parallel development: Phases 3–5 split into K-Track (backend) and L-Track (frontend). Phase 6.5 (Integration) added as the merge point. K7/L9 demo tasks defined. Build Order diagram updated.                        |
+| 10      | 2026-04-05 | K      | K4 complete: `vision_service.py` (lazy-load ViT pipeline, `detect_foods()`, stub fallback), `sequence_service.py` (Gemini 1.5 Flash prompt → structured JSON, stub fallback), `routers/vision.py` (`POST /api/v1/analyze-meal`, 10MB limit, content-type guard, `VISION_USE_STUB` flag), vision router wired into `main.py`. K5 (`context_service.py`) is next. |
 
 ---
 

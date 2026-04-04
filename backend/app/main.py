@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
-from app.routers import users, recommendations, feedback, glucose, meals, exercises
+from app.routers import users, recommendations, feedback, glucose, meals, exercises, vision
 
 Base.metadata.create_all(bind=engine)
 
@@ -21,6 +21,7 @@ app.include_router(feedback.router, prefix="/api/v1")
 app.include_router(glucose.router, prefix="/api/v1")
 app.include_router(meals.router, prefix="/api/v1")
 app.include_router(exercises.router, prefix="/api/v1")
+app.include_router(vision.router, prefix="/api/v1")   # K4.3 — Vision AI
 
 @app.get("/")
 async def root():

@@ -1,0 +1,68 @@
+{
+  "_comment": "Mock response for GET /api/v1/recommend/{user_id}",
+  "_used_by": "Member L — gluconav_dashboard_screen.dart, activity_snack_screen.dart, burnout UI (L7, L8)",
+  "_built_by": "Member K — routers/recommendations.py (extended by K5 + K6)",
+  "_notes": "K must return EXACTLY this shape. L must consume EXACTLY this shape. spike_risk added in K5. coach_mode + burnout_score added in K6.",
+
+  "user_id": "demo_user_new",
+  "diet_recommendations": [
+    {
+      "meal_id": "meal_001",
+      "name": "Idli + Sambar",
+      "cuisine": "South Indian",
+      "predicted_glucose_delta": 18,
+      "gi": 35,
+      "gl": 8,
+      "reason": "Low GI, high fiber. Best match for your Type 2 profile.",
+      "tags": ["vegetarian", "low-gi", "breakfast"]
+    },
+    {
+      "meal_id": "meal_002",
+      "name": "Moong Dal Chilla",
+      "cuisine": "North Indian",
+      "predicted_glucose_delta": 22,
+      "gi": 38,
+      "gl": 9,
+      "reason": "High protein dal keeps you full and glucose stable.",
+      "tags": ["vegetarian", "high-protein", "breakfast"]
+    },
+    {
+      "meal_id": "meal_003",
+      "name": "Oats Upma",
+      "cuisine": "South Indian",
+      "predicted_glucose_delta": 26,
+      "gi": 42,
+      "gl": 11,
+      "reason": "Oat beta-glucan slows glucose absorption significantly.",
+      "tags": ["vegetarian", "high-fiber", "breakfast"]
+    }
+  ],
+  "exercise_recommendations": [
+    {
+      "exercise_id": "ex_001",
+      "name": "Brisk Walk",
+      "type": "aerobic",
+      "duration_minutes": 15,
+      "met": 3.5,
+      "glucose_benefit_mg_dl": -20,
+      "burnout_cost": 2,
+      "reason": "Low intensity. Safe post-meal activity for all diabetes types.",
+      "timing": "post_meal"
+    },
+    {
+      "exercise_id": "ex_002",
+      "name": "Chair Squats",
+      "type": "strength",
+      "duration_minutes": 10,
+      "met": 3.0,
+      "glucose_benefit_mg_dl": -18,
+      "burnout_cost": 3,
+      "reason": "Engages large muscles, boosts glucose uptake without fatigue.",
+      "timing": "post_meal"
+    }
+  ],
+  "context_warning": null,
+  "spike_risk": "medium",
+  "coach_mode": "active",
+  "burnout_score": 3
+}

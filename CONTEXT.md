@@ -1,13 +1,13 @@
 # GlucoNav — Project Context
 > **For Medathon 2026 | Team Innofusion**
-> Last updated: 2026-04-04
+> Last updated: 2026-04-05
 
 ## Team
 | Member | Role                                                              |
 | ------ | ----------------------------------------------------------------- |
 | **J**  | ML Engineer — Recommendation Engine (LightFM, data, prediction)   |
 | **K**  | Backend Engineer — FastAPI, Vision AI, Burnout service, DB models |
-| **L**  | Frontend Engineer — Flutter UI, all screens, Riverpod, API wiring |
+| **L**  | Frontend Engineer — Flutter UI, all screens, BLoC providers, API wiring |
 
 ---
 
@@ -33,7 +33,7 @@ NOT a calorie tracker — it learns each user's unique glucose response patterns
 | Food Vision AI        | `DrishtiSharma/finetuned-ViT-IndianFood-Classification-v3` (HuggingFace) |
 | LLM (Eating Sequence) | Gemini 1.5 Flash via `google-generativeai`                               |
 | Database              | SQLite (dev) → PostgreSQL (prod) via SQLAlchemy                          |
-| State Management      | Riverpod (Flutter)                                                       |
+| State Management      | BLoC / Provider / Hive (OpenNutriTracker base — NOT Riverpod)            |
 
 ---
 
@@ -102,15 +102,16 @@ gluconav/
 - ✅ DB Models: `user.py`, `meal.py`, `exercise.py`, `glucose.py`
 
 ### Phase 2A — FastAPI Backend
-- ✅ `main.py` — FastAPI app with CORS
+- ✅ `main.py` — FastAPI app with CORS (now includes vision router)
 - ✅ `POST /api/v1/users/onboard`
 - ✅ `GET /api/v1/recommend/{user_id}`
 - ✅ `POST /api/v1/feedback`
 - ✅ `POST /api/v1/glucose-reading`
 - ✅ `GET /api/v1/meals`
 - ✅ `GET /api/v1/exercises`
+- ✅ `POST /api/v1/analyze-meal` — Vision AI endpoint (K4.3 done)
 - ✅ Pydantic schemas: user, recommendation, feedback
-- ❌ Context service (`context_service.py`)
+- ❌ Context service (`context_service.py`) — planned for K5
 
 ### Phase 2B — Flutter App (OpenNutriTracker-based)
 - ✅ J0: App renamed → `GlucoNavApp`, GlucoNav Apple brand colors applied (`#0F6E56` teal, `#F5F5F7` canvas)
@@ -127,28 +128,54 @@ gluconav/
 
 > **Note:** We use OpenNutriTracker (ONT) as the Flutter base. ONT provides meal logging, food search, barcode scanner, diary, and activity tracking. GlucoNav innovations (AI recommendations, eating order advice) are layered on top as new BLoC-based features. BLoC/Provider/Hive are kept (NOT Riverpod). Frontend project root: `frontend/OpenNutriTracker/`
 
-### Phase 3 — Sequence Navigator (Parallel: K & L)
-- ❌ **K:** `vision_service.py` — ViT food detection (HuggingFace)
-- ❌ **K:** `sequence_service.py` — Gemini LLM eating sequence generation
-- ❌ **K:** `POST /api/v1/analyze-meal` endpoint
-- ❌ **L:** `camera_screen.dart` — image picker
-- ❌ **L:** `sequence_overlay_screen.dart` — numbered food overlay + spike comparison
+### ║ K-TRACK — Backend: Phases 3–5 (Member K, independent) ║
 
-### Phase 4 — Post-Meal Engine (Parallel: K & L)
-- ❌ **K:** `context_service.py` — `calculate_spike_risk()` function
-- ❌ **L:** Flutter 20-min post-meal timer
-- ❌ **L:** Activity Snack card UI + exercise interaction logging
+#### Phase 3 — Vision + LLM Backend
+- ✅ `services/vision_service.py` — ViT food detection (K4.1)
+- ✅ `services/sequence_service.py` — Gemini 1.5 Flash eating sequence (K4.2)
+- ✅ `routers/vision.py` — `POST /api/v1/analyze-meal` (K4.3)
 
-### Phase 5 — Burnout Shield (Parallel: K & L)
-- ❌ **K:** `burnout_service.py` — burnout score calculation
-- ❌ **K:** Coach mode logic (active / balanced / supportive)
-- ❌ **L:** Flutter UI tone adjustment based on coach_mode
+#### Phase 4 — Spike Risk Service
+- ❌ `services/context_service.py` — `calculate_spike_risk()` + `spike_risk` in `/recommend` (K5.1–K5.2)
 
-### Phase 6 — Integration & Demo Preparation
-- ❌ Integration between FastAPI endpoints (K) and Flutter views (L)
-- ❌ `demo_user_new` seeded (zero history — generic recommendations)
-- ❌ `demo_user_experienced` seeded (14-day simulated history — personalized)
-- ❌ End-to-end demo flow tested
+#### Phase 5 — Burnout Backend
+- ❌ `services/burnout_service.py` — `calculate_burnout_score()` + `get_coach_mode()` (K6.1–K6.2)
+- ❌ `coach_mode` + `burnout_score` in `/recommend` response (K6.3)
+
+#### Phase 6 — Demo Seeds
+- ❌ `scripts/seed_demo.py` — demo_user_new + demo_user_experienced (K7.1–K7.3)
+
+---
+
+### ║ L-TRACK — Frontend: Phases 3–5 (Member L, independent, uses mock JSON) ║
+
+#### Phase 3 — Sequence Navigator UI
+- ❌ `screens/sequence/camera_screen.dart` — image_picker + mock POST (L6.1)
+- ❌ `screens/sequence/sequence_overlay_screen.dart` — photo + numbered badges (L6.2–L6.3)
+- ❌ Spike comparison cards + "Start Eating!" CTA (L6.4)
+- ❌ "Scan My Plate" wired from dashboard (L6.5)
+
+#### Phase 4 — Activity Snack UI
+- ❌ 20-min post-meal background timer (L7.1)
+- ❌ `screens/activity/activity_snack_screen.dart` (L7.2–L7.4)
+
+#### Phase 5 — Burnout Shield UI
+- ❌ active / balanced / supportive tone modes (L8.1–L8.5)
+
+#### Phase 6 — Frontend Demo Polish
+- ❌ 8-step demo flow, trends screen, side-by-side comparison (L9.1–L9.3)
+
+---
+
+### Phase 6.5 — Integration (K + L together, after both tracks done)
+- ❌ Replace L-Track mock JSON with real API calls (I1.1)
+- ❌ End-to-end connected testing (I1.2–I1.5)
+
+### Phase 6 — Demo Preparation (All three, after Integration)
+- ❌ `demo_user_new` + `demo_user_experienced` seeded and verified
+- ❌ 8-step demo script tested end-to-end
+- ❌ Side-by-side personalization comparison confirmed
+- ❌ Demo rehearsed for judges
 
 ---
 
@@ -187,8 +214,16 @@ GOOGLE_AI_KEY=your_gemini_api_key_here
 DATABASE_URL=sqlite:///./gluconav.db
 MODEL_PATH=app/ml/models/
 DEBUG=True
+VISION_USE_STUB=0   # Set to 1 to bypass HuggingFace + Gemini (local dev/testing)
 ```
 
 ---
+
+## Session Summary (Latest)
+
+| Session | Date       | Member | Changes                                                                                                                                   |
+| ------- | ---------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 9       | 2026-04-05 | K+L    | TEAM_PLAN.md fully restructured: parallel K-Track / L-Track from Phase 3→5, Phase 6.5 Integration added, Build Order diagram updated.     |
+| 10      | 2026-04-05 | K      | K4 complete: `vision_service.py` (ViT HuggingFace), `sequence_service.py` (Gemini 1.5 Flash), `routers/vision.py` (`POST /analyze-meal`), vision router wired into `main.py`. `VISION_USE_STUB` env flag added for local testing. |
 
 *Update this file after every coding session. Mark tasks ✅ when done.*

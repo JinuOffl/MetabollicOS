@@ -1,0 +1,20 @@
+{
+  "_comment": "Mock response for POST /api/v1/analyze-meal",
+  "_used_by": "Member L — camera_screen.dart and sequence_overlay_screen.dart",
+  "_built_by": "Member K — routers/vision.py",
+  "_notes": "K must return EXACTLY this shape. L must consume EXACTLY this shape. Do not add or rename keys without telling both members.",
+
+  "detected_items": [
+    { "label": "Idli",    "confidence": 0.92 },
+    { "label": "Sambar",  "confidence": 0.76 },
+    { "label": "Chutney", "confidence": 0.55 }
+  ],
+  "eating_sequence": [
+    { "step": 1, "food": "Sambar",  "category": "Fiber",   "reason": "Start with fiber-rich dal to slow carb absorption." },
+    { "step": 2, "food": "Chutney", "category": "Fat",     "reason": "Fat slows gastric emptying, blunting glucose spike." },
+    { "step": 3, "food": "Idli",    "category": "Carb",    "reason": "Eat carbs last — spike is now significantly reduced." }
+  ],
+  "spike_without_order_mg_dl": 67,
+  "spike_with_order_mg_dl": 24,
+  "reduction_percent": 64
+}
