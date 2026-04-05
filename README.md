@@ -23,7 +23,7 @@ See **[DEMO_SCRIPT.md](./DEMO_SCRIPT.md)** for the full 8-step judge-facing demo
 
 ---
 
-## First-Time Setup
+## First-Time Setup 
 
 ### Step 1 — Backend + Miniconda
 
@@ -105,33 +105,32 @@ See **[DEMO_SCRIPT.md](./DEMO_SCRIPT.md)** for:
 
 ### At a glance:
 
-| Step | Tab | Action | Key stat |
-|------|-----|--------|----------|
-| 1 | Onboarding | Pick params | Creates structured user record |
-| 2 | Home | Show Idli + Sambar as #1 | "+18 mg/dL predicted spike" |
-| 3 | Profile → Home | Switch new vs experienced | "59% better control after 14 days" |
-| 4 | Home | Long Press Meal Card | Smart Meal Swap popup shown |
-| 5 | Home | Tap "Scan My Plate" | Camera opens |
-| 6 | Camera | Pick food photo | ViT detects items |
-| 7 | Sequence overlay | Show numbered badges | "64% spike reduction with this order" |
-| 8 | Sequence overlay | Tap "Start Eating!" | 20-min timer starts |
-| 9 | Application | Action Modal logging | Track arbitrary exercise & food via bottom sheets |
-| 10 | Profile | Show TiR + streak | "71% Time-in-Range, 12-day streak" |
-
+| Step | Tab              | Action                    | Key stat                                          |
+| ---- | ---------------- | ------------------------- | ------------------------------------------------- |
+| 1    | Onboarding       | Pick params               | Creates structured user record                    |
+| 2    | Home             | Show Idli + Sambar as #1  | "+18 mg/dL predicted spike"                       |
+| 3    | Profile → Home   | Switch new vs experienced | "59% better control after 14 days"                |
+| 4    | Home             | Long Press Meal Card      | Smart Meal Swap popup shown                       |
+| 5    | Home             | Tap "Scan My Plate"       | Camera opens                                      |
+| 6    | Camera           | Pick food photo           | ViT detects items                                 |
+| 7    | Sequence overlay | Show numbered badges      | "64% spike reduction with this order"             |
+| 8    | Sequence overlay | Tap "Start Eating!"       | 20-min timer starts                               |
+| 9    | Application      | Action Modal logging      | Track arbitrary exercise & food via bottom sheets |
+| 10   | Profile          | Show TiR + streak         | "71% Time-in-Range, 12-day streak"                |
 ---
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/users/onboard` | Register + diabetes profile |
-| GET | `/api/v1/recommend/{user_id}` | Personalized recs (diet + exercise + spike_risk + coach_mode) |
-| POST | `/api/v1/feedback` | Log interaction (requires user_id) |
-| POST | `/api/v1/glucose-reading` | Log glucometer reading |
-| POST | `/api/v1/analyze-meal` | Photo → ViT detection + Gemini sequence |
-| GET | `/api/v1/meals` | 65-item Indian meal catalog |
-| GET | `/api/v1/exercises` | 30-item exercise catalog |
-| GET | `/health` | Health check |
+| Method | Endpoint                      | Description                                                   |
+| ------ | ----------------------------- | ------------------------------------------------------------- |
+| POST   | `/api/v1/users/onboard`       | Register + diabetes profile                                   |
+| GET    | `/api/v1/recommend/{user_id}` | Personalized recs (diet + exercise + spike_risk + coach_mode) |
+| POST   | `/api/v1/feedback`            | Log interaction (requires user_id)                            |
+| POST   | `/api/v1/glucose-reading`     | Log glucometer reading                                        |
+| POST   | `/api/v1/analyze-meal`        | Photo → ViT detection + Gemini sequence                       |
+| GET    | `/api/v1/meals`               | 65-item Indian meal catalog                                   |
+| GET    | `/api/v1/exercises`           | 30-item exercise catalog                                      |
+| GET    | `/health`                     | Health check                                                  |
 
 Full docs: `http://localhost:8000/docs` (Swagger UI)
 
@@ -177,15 +176,15 @@ frontend/OpenNutriTracker/lib/
 
 ## Integration Notes
 
-| Concern | Resolution |
-|---------|-----------|
-| CORS | `allow_origins=["*"]` in `main.py` |
-| Flutter web image upload | `MultipartFile.fromBytes()` + `MediaType('image','jpeg')` |
-| Backend unreachable | Auto-fallback to mock JSON |
-| User ID persistence | SharedPreferences — forces Onboarding if empty |
-| Demo user switching | Profile tab shortcuts (bottom list) |
-| Real-time spike_risk | sleepScore + currentGlucose passed to `/recommend` query params |
-| SQLite FKs | MealInteraction + ExerciseInteraction use soft FKs (no hard constraint) |
+| Concern                  | Resolution                                                              |
+| ------------------------ | ----------------------------------------------------------------------- |
+| CORS                     | `allow_origins=["*"]` in `main.py`                                      |
+| Flutter web image upload | `MultipartFile.fromBytes()` + `MediaType('image','jpeg')`               |
+| Backend unreachable      | Auto-fallback to mock JSON                                              |
+| User ID persistence      | SharedPreferences — forces Onboarding if empty                          |
+| Demo user switching      | Profile tab shortcuts (bottom list)                                     |
+| Real-time spike_risk     | sleepScore + currentGlucose passed to `/recommend` query params         |
+| SQLite FKs               | MealInteraction + ExerciseInteraction use soft FKs (no hard constraint) |
 
 ---
 

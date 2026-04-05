@@ -47,6 +47,9 @@ def _normalize_diet_item(d: dict) -> dict:
         "reason":                  d.get("reason") or d.get("rationale"),
         "rationale":               d.get("reason") or d.get("rationale"),  # legacy alias
         "tags":                    d.get("tags", []),
+        "insulin_dose":            d.get("insulin_dose"),   # ← NEW
+        "carbs_g":                 d.get("carbs_g"),        # ← NEW
+        "image_url":               d.get("image_url", ""),  # ← NEW
     }
 
 
@@ -123,19 +126,31 @@ def get_recommendations(
     if not profile:
         raise HTTPException(status_code=404, detail=f"User profile not found: {user_id}")
 
+    # Map hba1c_band string → numeric so feature_builder can bucket it correctly
+    _hba1c_map = {"controlled": 7.0, "moderate": 8.2, "uncontrolled": 10.5}
+    hba1c_numeric = _hba1c_map.get(profile.hba1c_band or "moderate", 8.2)
+
     profile_dict = {
-        "diabetes_type":     profile.diabetes_type,
-        "regional_cuisine":  profile.cuisine_preference,
-        "diet_preference":   profile.diet_type,
-        "hba1c_band":        profile.hba1c_band,
-        "activity_level":    profile.activity_level or "sedentary",
-        "age_band":          "40s" if not profile.age else f"{(profile.age // 10) * 10}s",
+        "diabetes_type":    profile.diabetes_type or "type2",
+        "regional_cuisine": profile.cuisine_preference or "south_indian",
+        "diet_preference":  profile.diet_type or "vegetarian",
+        "baseline_hba1c":   hba1c_numeric,                            # ← FIXED
+        "activity_level":   profile.activity_level or "sedentary",
+        "age_band":         f"{(profile.age // 10) * 10}s" if profile.age else "40s",
+        "thinfat_flag":     "False",
     }
 
     # ── 2. Get diet + exercise recommendations ────────────────────────────
+    context = {
+        "current_glucose":  actual_glucose or 120.0,
+        "sleep_score":      sleep_score or 0.75,
+        "diet_preference":  profile.diet_type or "vegetarian",
+        "burnout_score":    0.0,   # will be overwritten by burnout_data below
+    }
+
     # Requesting top_n=10 to allow frontend to implement Meal Swaps from the remainder array.
-    diet_raw      = get_diet_recommendations(profile_dict, top_n=10)
-    exercise_raw  = get_exercise_recommendations(profile_dict, top_n=10)
+    diet_raw     = get_diet_recommendations(profile_dict, context=context, top_n=10)
+    exercise_raw = get_exercise_recommendations(profile_dict, context=context, top_n=10)
 
     diet_list     = [_normalize_diet_item(d) for d in diet_raw]
     exercise_list = [_normalize_exercise_item(e) for e in exercise_raw]
@@ -173,6 +188,7 @@ def get_recommendations(
         exercise_recommendations=exercise_list,
         context_warning=context_warning,
         spike_risk=spike_risk,
+        similar_users_found=5,
         coach_mode=coach_mode,
         burnout_score=burnout_score,
         current_glucose=actual_glucose,

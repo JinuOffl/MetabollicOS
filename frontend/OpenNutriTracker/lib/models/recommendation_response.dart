@@ -9,6 +9,10 @@ class DietRecommendation {
   final String? reason;
   final List<String> tags;
 
+  final String? insulinDose;   // ← NEW: "4.5 units" or null
+  final double? carbsG;        // ← NEW: grams of carbs
+  final String? imageUrl;      // ← NEW
+
   const DietRecommendation({
     required this.mealId,
     required this.name,
@@ -17,6 +21,9 @@ class DietRecommendation {
     this.gi,
     this.reason,
     this.tags = const [],
+    this.insulinDose,           // ← NEW
+    this.carbsG,                // ← NEW
+    this.imageUrl,              // ← NEW
   });
 
   factory DietRecommendation.fromJson(Map<String, dynamic> j) =>
@@ -29,6 +36,9 @@ class DietRecommendation {
         gi: (j['gi'] as num?)?.toDouble(),
         reason: j['reason'] as String?,
         tags: ((j['tags'] as List?) ?? []).cast<String>(),
+        insulinDose: j['insulin_dose'] as String?,   // ← NEW
+        carbsG: (j['carbs_g'] as num?)?.toDouble(),  // ← NEW
+        imageUrl: j['image_url'] as String?,         // ← NEW
       );
 
   /// Spike colour: < 30 green, 30-60 amber, > 60 red.

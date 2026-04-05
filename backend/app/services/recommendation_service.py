@@ -178,6 +178,8 @@ def predict_meals(
             "glycemic_load": str(row["glycemic_load"]),
             "fiber_g": float(row.get("fiber_g", 0)),
             "protein_pct": float(row.get("protein_pct", 0)),
+            "carbs_g": float(row.get("carbs_g", 0)),    # ← NEW
+            "image_url": str(row.get("image_url", "")),   # ← NEW
             "is_vegetarian": bool(str(row["is_vegetarian"]).upper() == "TRUE"),
             "score": float(score) + adj,
         })

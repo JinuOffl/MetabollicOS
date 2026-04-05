@@ -45,6 +45,32 @@ _GI_TO_SPIKE = {
     "high":   75.0,    # GI > 70
 }
 
+# ── Type 1 Insulin Bolus ──────────────────────────────────────────────────────
+_DEFAULT_ICR = 10      # grams of carbs per 1 unit of insulin
+_DEFAULT_ISF = 40      # mg/dL drop per 1 unit of insulin
+_TARGET_GLUCOSE = 100  # mg/dL target
+
+def calculate_insulin_dose(
+    carbs_g: float,
+    current_glucose: float,
+    diabetes_type: str,
+) -> Optional[str]:
+    """
+    Returns formatted insulin dose string for Type 1 patients.
+    Returns None for Type 2, prediabetes, GDM.
+
+    Formula (standard bolus):
+        carb_dose       = carbs_g / ICR
+        correction_dose = max(0, (current_glucose - target) / ISF)
+        total           = carb_dose + correction_dose
+    """
+    if str(diabetes_type).lower() != "type1":
+        return None
+    carb_dose = carbs_g / _DEFAULT_ICR
+    correction = max(0.0, (current_glucose - _TARGET_GLUCOSE) / _DEFAULT_ISF)
+    total = round(carb_dose + correction, 1)
+    return f"{total} units"
+
 def _estimate_spike(meal: dict, sleep_score: float, current_glucose: float) -> float:
     gi = float(meal.get("glycemic_index", 55))
     if gi < 55:
@@ -146,6 +172,18 @@ def get_diet_recommendations(
     if not candidates:
         return []
 
+    # Cold-start boost: if user has few interactions, find similar training users
+    # and boost their preferred meals by 0.10 score
+    try:
+        from app.services.cold_start_service import find_similar_users
+        similar_data = find_similar_users(user_feature_names, top_k=5)
+        similar_meal_ids = set(similar_data.get("top_meal_ids", []))
+        for meal in candidates:
+            if meal["meal_id"] in similar_meal_ids:
+                meal["score"] += 0.10  # Slight boost from similar users
+    except Exception:
+        pass  # Non-critical — fail silently
+
     # ── Context re-ranking ────────────────────────────────────────────────────
     results = []
     for meal in candidates:
@@ -171,6 +209,15 @@ def get_diet_recommendations(
         predicted_spike = _estimate_spike(meal, sleep_score, current_glucose)
         reason = _build_reason(meal, sleep_score, current_glucose, adj)
 
+        # Calculate insulin dose for Type 1 patients
+        diabetes_type = user_profile.get("diabetes_type", "type2")
+        carbs_g = float(meal.get("carbs_g", 0))       # from enriched meals.csv
+        insulin_dose = calculate_insulin_dose(
+            carbs_g=carbs_g,
+            current_glucose=current_glucose,
+            diabetes_type=diabetes_type,
+        )
+
         results.append({
             "meal_id":            meal["meal_id"],
             "name":               meal["name"],
@@ -180,6 +227,8 @@ def get_diet_recommendations(
             "is_vegetarian":      meal["is_vegetarian"],
             "reason":             reason,
             "score":              meal["score"] + adj,
+            "insulin_dose":       insulin_dose,         # ← NEW: None for Type 2
+            "carbs_g":            carbs_g,              # ← NEW: for frontend display
         })
 
     results.sort(key=lambda x: x["score"], reverse=True)

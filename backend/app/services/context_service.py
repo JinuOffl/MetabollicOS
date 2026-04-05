@@ -78,9 +78,9 @@ def calculate_spike_risk(
     # ── Factor 4: Current glucose ──────────────────────────────────────────
     if current_glucose is not None:
         if current_glucose > _HIGH_GLUCOSE_MG_DL:
-            score += 2
+            score += 5  # Force high risk when baseline is already very high
             logger.debug(
-                "spike_risk: glucose=%.0f → +2 (already elevated)", current_glucose
+                "spike_risk: glucose=%.0f → +5 (already elevated)", current_glucose
             )
         elif current_glucose > _MEDIUM_GLUCOSE_MG_DL:
             score += 1

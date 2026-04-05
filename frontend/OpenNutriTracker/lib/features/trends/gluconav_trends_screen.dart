@@ -160,6 +160,18 @@ class _GlucoNavTrendsScreenState extends State<GlucoNavTrendsScreen> {
           ),
           const SizedBox(height: 12),
           _DemoButton(
+            icon: Icons.medical_information,
+            label: 'Type 1 Patient (💉 Insulin Demo)',
+            color: const Color(0xFF6366F1),
+            onTap: () {
+              GlucoNavApiService.userId = 'demo_user_type1';
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Switched to Type 1 Patient (💉 Insulin Demo)'), backgroundColor: Color(0xFF6366F1)),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _DemoButton(
             icon: Icons.delete_forever,
             label: '🔴 Secret Demo Reset (Clear Data)',
             color: Colors.red,

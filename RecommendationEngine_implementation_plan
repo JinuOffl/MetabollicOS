@@ -1,0 +1,68 @@
+# Goal: Upgrade Recommendation Engine & Fix Data Flow
+
+This plan shifts focus away from the CGM simulator (which your teammate will handle) and focuses entirely on making the Recommendation Engine the true "soul" of GlucoNav. We will migrate to real datasets, add Type 1 dosage predictions, support meal imagery, and fix the "sticky mock data" bug in the Flutter app.
+
+## User Review Required
+
+> [!WARNING]
+> Moving to a "real" dataset requires us to have actual Carb, Protein, and Fat values to accurately calculate Insulin Bolus dosages for Type 1 patients. Are you comfortable with me writing a script to generate a highly realistic CSV with macros and Unsplash/Pexels image links for the Indian meals?
+
+> [!IMPORTANT]
+> To fix the issue your teammate found, we need to make the Flutter app stop "silently" falling back to mock data when it encounters a 404/500 error (such as when a new User ID hasn't been seeded properly). I will update the API service so it only mocks if the backend is distinctly down, but throws an intent for re-onboarding if the User ID is simply missing.
+
+---
+
+## Proposed Changes
+
+### 1. Data Layer: Real Datasets & Images
+Instead of purely mathematical synthetic arrays, we need realism for medical accuracy.
+
+#### [NEW] [backend/data/real_meals.csv]
+- Create a curated dataset of 40–50 Indian meals.
+- Include fields: `id, name, cuisine, is_vegetarian, glycemic_index, glycemic_load, carbs_g, protein_g, fat_g, image_url`.
+
+#### [MODIFY] [backend/app/ml/train_diet.py]
+- Switch the LightFM dataset builder to read from `real_meals.csv`.
+
+### 2. Recommendation Engine: Type 1 Dosage & Explainers
+We need to handle Type 1 patients differently by calculating their required insulin bolus.
+
+#### [MODIFY] [backend/app/schemas/recommendation.py]
+- Add `insulin_dose: Optional[str] = None` and `image_url: Optional[str] = None` to `DietRecommendation` and `RecommendResponse`.
+
+#### [MODIFY] [backend/app/services/diet_engine.py]
+- **Type 1 Logic**: If `profile.diabetes_type == 'type1'`, calculate dosage:  
+  `dose = (Meal Carbs / ICR) + ((Current Glucose - Target Glucose) / ISF)`.
+  *We will assign a default ICR (Insulin-to-Carb Ratio) and ISF (Insulin Sensitivity Factor) to the demo profiles.*
+- **Cosine Similarity Cold Start**: Ensure the engine uses a user-feature embedding similarity fallback if LightFM returns neutral scores for a brand new user with 0 interactions.
+
+### 3. Frontend Integration: Images, Dosage, & Bug Fix
+
+#### [MODIFY] [frontend/OpenNutriTracker/lib/services/gluconav_api_service.dart]
+- **Fix the Teammate's Bug**: Instead of a blanket `try {...} catch (_) { return getRecommendationsMock(); }`, we will read the HTTP status code. If it is a `404` (User Profile Not Found), we will throw an exception that forces the UI to redirect to the Onboarding screen, rather than silently serving mock data.
+- **Image Support**: Parse `image_url` and `insulin_dose` from the new real API responses.
+
+#### [MODIFY] [frontend/OpenNutriTracker/lib/features/gluconav_dashboard/gluconav_dashboard_screen.dart]
+- Add a NetworkImage container to the Meal Cards.
+- Add a tiny pill badge (e.g., `💉 4 Units`) that only appears if `insulin_dose` is returned by the backend.
+
+---
+
+## Open Questions
+
+1. **Dataset Sourcing**: Do you have a specific CSV file of real meals you want to use, or should I generate a meticulously realistic one with accurate macronutrients and placeholder image URLs?
+2. **Cold Start UI**: When a cold start happens (before they log their first meal), LightFM handles it decently via user features (age/weight/goal). Do you want me to augment `diet_engine.py` with explicit K-Nearest Neighbors/Cosine Similarity to explicitly say "Users like you love this meal"?
+3. Does this revised architect file perfectly cover what you'll be presenting?
+
+---
+
+## Verification Plan
+
+### Backend Validation
+- Train new LightFM model with `real_meals.csv` and verify AUC > 0.70.
+- Run `curl` against the recommendations endpoint simulating a Type 1 patient with a high-carb meal to ensure `insulin_dose` is returned accurately.
+
+### Frontend Validation
+- Delete SharedPreferences (Local Storage in Chrome).
+- Verify app successfully forces a new onboarding flow and saves a new UserID to SQLite.
+- Verify Meal Cards display realistic images and dosage chips when applicable.

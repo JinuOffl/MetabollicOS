@@ -18,9 +18,9 @@
 
 ---
 
-## Current State — PHASE 7 UI REDESIGN ✅ COMPLETE
+## Current State — PHASE 12 Cosine Similarity Cold-Start ✅ COMPLETE
 
-**Phase 7 is complete.** We have successfully shifted GlucoNav to a 3-tab architecture, integrated OpenNutriTracker native onboarding logic mapped to our FastAPI backend, built long-press smart-swap modals for Meals and Activities on the dashboard, added dynamic text-logging modals, and enforced strict typed JSON for Gemini Flash in our sequence service.
+**Phase 12 is complete.** The integration engine represents the "find users like you" story properly using Scikit-Learn's `cosine_similarity` module. A separate script now generates sparse arrays and mathematically scores related top meals dynamically for uninitialized users. `similar_users_found` property exposes the data successfully to the frontend models via FAST API logic.
 
 ---
 
@@ -162,3 +162,8 @@ Set `VISION_USE_STUB=1` in `backend/.env` if HuggingFace ViT + Gemini aren't loa
 | 15 | 2026-04-05 | L   | **Phase 7 UI Redesign A.** Navigation shell from 4 to 3-tabs. Home Screen redesigned to use horizontal scroll blocks. Added Diary/Demo shortcuts to Profile screen. |
 | 16 | 2026-04-05 | L+K | **Phase 7 UI Redesign B.** OpenNutriTracker native onboarding Flow. Dash log action modals. Long Press Meal & Activity swapper from ML stack. Strict JSON schema for Gemini. |
 | 17 | 2026-04-05 | K   | **Phase 7 Bug Fix.** Added missing columns (`gender`, `goal`, `activity_level`) to `user_profiles` SQLite table to resolve 500 error on onboarding completion. |
+| 18 | 2026-04-05 | J   | **Phase 8 Engine Plumbing.** Fixed HbA1c mapping, context passing, Flutter API fallback logic, seeded demo_user_type1, and added a demo toggle in Profile tab. |
+| 19 | 2026-04-05 | J   | **Phase 9 Type 1 Insulin Dosage.** Enriched `meals.csv` with `carbs_g`. Added standard bolus formula (ICR 10, ISF 40, Target 100). Updated engine, schema, APIs, and dart models. Added 💉 badge to UI. |
+| 20 | 2026-04-05 | J   | **Phase 10 Meal Images.** Added `image_url` script. Surfaced `image_url` property in backend responses and Flutter card UI to display rich photography. |
+| 21 | 2026-04-05 | J   | **Phase 11 CGM Reactive Polling Check.** Validated End-to-end CGM data flow. Tested dynamic fallback ranking behavior on 245mg/dl spike. Validated standard Type 1 vs Type 2 schema behaviors securely. |
+| 22 | 2026-04-05 | J   | **Phase 12 Cold-Start System.** Built ML cosine sim algorithms for uninitialized user modeling via SciKit vector mapping logic. Secured API schema routing via `similar_users_found` injection. |

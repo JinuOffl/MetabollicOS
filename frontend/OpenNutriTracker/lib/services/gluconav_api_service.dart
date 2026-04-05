@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:async';
+import 'dart:io';
 
-import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -22,7 +24,9 @@ import '../models/sequence_result.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 class GlucoNavApiService {
-  static const String _base = 'http://10.242.238.169:8000/api/v1';
+  // Use localhost for same-machine Chrome demo (flutter run -d chrome)
+  // Change to your WiFi IP if testing from a separate device
+  static const String _base = 'http://localhost:8000/api/v1';
 
   /// Active user ID. Set during onboarding; defaults to demo_user_experienced.
   static String userId = 'demo_user_experienced';
@@ -83,8 +87,16 @@ class GlucoNavApiService {
         currentGlucose: currentGlucose,
         steps: steps,
       );
+    } on SocketException catch (_) {
+      // Backend is truly offline — use mock so demo still works
+      return getRecommendationsMock();
+    } on TimeoutException catch (_) {
+      // Backend too slow — use mock
+      return getRecommendationsMock();
     } catch (e) {
-      // Backend unreachable or error — fall back to rich mock
+      // Other errors (404, 500): log but still mock to not crash demo
+      // ignore: avoid_print
+      debugPrint('⚠️ GlucoNav API error: $e — serving mock data');
       return getRecommendationsMock();
     }
   }

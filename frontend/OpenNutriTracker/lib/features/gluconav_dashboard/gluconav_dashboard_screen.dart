@@ -513,7 +513,7 @@ class _MealCard extends StatelessWidget {
     final showSpikeColor = mode != 'supportive' || isGood;
 
     return Container(
-      width: 140,
+      width: 155,
       margin: const EdgeInsets.only(right: 12),
       decoration: BoxDecoration(
         color: GlucoNavColors.card,
@@ -525,16 +525,25 @@ class _MealCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: showSpikeColor ? spikeColor.withOpacity(0.12) : GlucoNavColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Icon(Icons.restaurant, color: showSpikeColor ? spikeColor : accent, size: 20),
-              ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: (meal.imageUrl != null && meal.imageUrl!.isNotEmpty)
+                  ? Image.network(
+                      meal.imageUrl!,
+                      width: 56,
+                      height: 56,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 56, height: 56,
+                        color: showSpikeColor ? spikeColor.withOpacity(0.12) : GlucoNavColors.surfaceVariant,
+                        child: Icon(Icons.restaurant, color: accent, size: 20),
+                      ),
+                    )
+                  : Container(
+                      width: 56, height: 56,
+                      color: showSpikeColor ? spikeColor.withOpacity(0.12) : GlucoNavColors.surfaceVariant,
+                      child: Icon(Icons.restaurant, color: showSpikeColor ? spikeColor : accent, size: 20),
+                    ),
             ),
             const SizedBox(height: 12),
             Text(meal.name,
@@ -556,6 +565,23 @@ class _MealCard extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: showSpikeColor ? spikeColor : GlucoNavColors.textSecondary),
                 ),
               ),
+            if (meal.insulinDose != null) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6366F1).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '💉 ${meal.insulinDose}',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10,
+                      color: Color(0xFF6366F1)),
+                ),
+              ),
+            ],
           ],
         ),
       ),

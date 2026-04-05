@@ -22,6 +22,7 @@ import sys
 import os
 import random
 from datetime import datetime, timedelta
+import uuid
 
 # Allow running from backend/ directory
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -206,6 +207,30 @@ def seed():
         print("\n── Seeding demo_user_experienced (S1.2 / K7.2) ───────────────")
         _upsert_user(db, DEMO_EXPERIENCED)
         _seed_interactions(db, "demo_user_experienced", days=14)
+
+        # ── demo_user_type1 ───────────────────────────────────────────────────────────
+        existing_t1 = db.query(User).filter(User.id == "demo_user_type1").first()
+        if not existing_t1:
+            db.add(User(id="demo_user_type1"))
+            db.flush()
+            db.add(UserProfile(
+                id=str(uuid.uuid4()),
+                user_id="demo_user_type1",
+                diabetes_type="type1",
+                hba1c_band="uncontrolled",
+                cuisine_preference="north_indian",
+                diet_type="non_vegetarian",
+                age=28,
+                weight_kg=65.0,
+                height_cm=172.0,
+                gender="male",
+                goal="control_glucose",
+                activity_level="light",
+            ))
+            print("✔ Created User: demo_user_type1")
+        else:
+            print("✔ User already exists: demo_user_type1")
+        db.commit()
 
         print("\n✅ Demo users seeded successfully.\n")
         _verify_delta(db)
