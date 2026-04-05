@@ -11,11 +11,16 @@ I1.4 — updated content-type check to accept application/octet-stream
 
 import logging
 import os
-from typing import List
+import uuid
+from typing import List, Optional
+from datetime import datetime
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, HTTPException, UploadFile, Depends, Query
+from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
+from app.database import get_db
+from app.models.glucose import GlucoseReading
 from app.services.vision_service import detect_foods, detect_foods_stub
 from app.services.sequence_service import generate_eating_sequence
 
@@ -86,7 +91,18 @@ async def analyze_meal(
 
     # ── Step 1: Food Detection ────────────────────────────────────────────
     try:
-        detected_raw = await detect_foods_stub(image_bytes) if _USE_STUB else await detect_foods(image_bytes)
+        if _USE_STUB:
+            detected_raw = await detect_foods_stub(image_bytes)
+        else:
+            try:
+                detected_raw = await detect_foods(image_bytes)
+            except Exception as exc:
+                logger.warning(
+                    "ViT model unavailable (%s) — falling back to stub. "
+                    "Set VISION_USE_STUB=1 in .env to suppress this warning.",
+                    exc,
+                )
+                detected_raw = await detect_foods_stub(image_bytes)
     except Exception as exc:
         logger.error("Food detection failed: %s", exc)
         raise HTTPException(status_code=500, detail=f"Food detection error: {exc}")
@@ -116,3 +132,94 @@ async def analyze_meal(
         spike_with_order_mg_dl=int(seq_result.get("spike_with_order_mg_dl", 28)),
         reduction_percent=int(seq_result.get("reduction_percent", 58)),
     )
+
+@router.post("/analyze-glucometer")
+async def analyze_glucometer(
+    image: UploadFile = File(...),
+    user_id: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """
+    Accepts a photo of a glucometer display.
+    Uses Gemini Flash to extract the numeric glucose reading.
+
+    NOTE: VISION_USE_STUB controls the ViT food-detection model only.
+    Glucometer OCR uses Gemini (API key only — no large model download),
+    so it always attempts a real read first. Falls back to stub (142) only if:
+      - GOOGLE_AI_KEY is not set, OR
+      - Gemini returns None (image unclear / not a glucometer)
+    """
+    try:
+        image_bytes = await image.read()
+
+        # Always try Gemini first — only needs the API key, not the ViT model.
+        # VISION_USE_STUB=1 skips heavy HuggingFace downloads; OCR is separate.
+        glucose_value: Optional[float] = None
+        api_key = os.getenv("GOOGLE_AI_KEY") or os.getenv("GEMINI_API_KEY")
+        confidence = "stub"
+
+        if api_key:
+            try:
+                glucose_value = await _extract_glucose_from_image(image_bytes)
+                if glucose_value is not None:
+                    confidence = "high"
+                    logger.info("Gemini glucometer OCR: %.1f mg/dL", glucose_value)
+                else:
+                    logger.warning("Gemini could not read a number — using stub fallback")
+            except Exception as gemini_exc:
+                logger.warning("Gemini glucometer OCR failed (%s) — stub fallback", gemini_exc)
+        else:
+            logger.warning("GOOGLE_AI_KEY not set — using stub value 142.0")
+
+        # Stub fallback: reached only when Gemini has no key, returned None, or errored
+        if glucose_value is None:
+            glucose_value = 142.0
+
+        # Log reading to DB if user_id provided
+        if user_id and glucose_value:
+            reading = GlucoseReading(
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                glucose_mgdl=glucose_value,
+                value_mgdl=glucose_value,
+                timestamp=datetime.utcnow(),
+                source="glucometer_photo",
+            )
+            db.add(reading)
+            db.commit()
+
+        return {
+            "glucose_mgdl": glucose_value,
+            "confidence": confidence,
+            "raw_text": str(int(glucose_value)),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+async def _extract_glucose_from_image(image_bytes: bytes) -> Optional[float]:
+    """Use Gemini Vision to read a numeric value from a glucometer display."""
+    import google.generativeai as genai
+    import os
+    api_key = os.getenv("GOOGLE_AI_KEY") or os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return None
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    
+    import PIL.Image
+    import io
+    pil_image = PIL.Image.open(io.BytesIO(image_bytes))
+    
+    prompt = (
+        "This is a photo of a blood glucose meter (glucometer) display. "
+        "Read the NUMERIC glucose value shown on the screen. "
+        "Return ONLY the number in JSON format: {\"glucose_mgdl\": <number>}. "
+        "If the display is unclear or not a glucometer, return {\"glucose_mgdl\": null}."
+    )
+    response = model.generate_content([prompt, pil_image])
+    import json, re
+    match = re.search(r'\{.*?\}', response.text, re.DOTALL)
+    if match:
+        data = json.loads(match.group())
+        return float(data.get("glucose_mgdl") or 0) or None
+    return None

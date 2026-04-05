@@ -96,7 +96,7 @@ class _DashboardViewState extends State<_DashboardView> {
 
         return Scaffold(
           backgroundColor: GlucoNavColors.background,
-          appBar: _buildAppBar(context, mode, accent, loaded.streakDays),
+          appBar: _buildAppBar(context, mode, accent, loaded.streakDays, loaded.isLiveData),
           body: RefreshIndicator(
             color: accent,
             onRefresh: () async =>
@@ -217,16 +217,42 @@ class _DashboardViewState extends State<_DashboardView> {
                   ),
                 ),
                 const SizedBox(height: 48),
-                // K5.2 — Developer pairing ID for the Live Demo
+                // K5.2 — Developer pairing ID + LIVE/DEMO indicator
                 Center(
                   child: Column(
                     children: [
-                      const Text('DEVICE PAIRING ID',
-                          style: TextStyle(
-                              fontSize: 10,
-                              color: GlucoNavColors.textSecondary,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.2)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text('DEVICE PAIRING ID',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  color: GlucoNavColors.textSecondary,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2)),
+                          const SizedBox(width: 8),
+                          // LIVE / DEMO data-source indicator
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: loaded.isLiveData
+                                  ? Colors.green.withOpacity(0.15)
+                                  : Colors.orange.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              loaded.isLiveData ? '● LIVE' : '○ DEMO',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: loaded.isLiveData
+                                    ? Colors.green[700]
+                                    : Colors.orange[700],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 6),
                       SelectableText(
                         GlucoNavApiService.userId,
@@ -248,7 +274,7 @@ class _DashboardViewState extends State<_DashboardView> {
   }
 
   PreferredSizeWidget _buildAppBar(
-      BuildContext context, String mode, Color accent, int streak) {
+      BuildContext context, String mode, Color accent, int streak, bool isLiveData) {
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
@@ -260,6 +286,32 @@ class _DashboardViewState extends State<_DashboardView> {
             fontSize: 20),
       ),
       actions: [
+        // LIVE / DEMO chip — instantly visible data-source indicator for demos
+        Container(
+          margin: const EdgeInsets.only(right: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: isLiveData
+                ? Colors.green.withOpacity(0.12)
+                : Colors.orange.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isLiveData
+                  ? Colors.green.withOpacity(0.4)
+                  : Colors.orange.withOpacity(0.4),
+              width: 1,
+            ),
+          ),
+          child: Text(
+            isLiveData ? '● LIVE' : '○ DEMO',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: isLiveData ? Colors.green[700] : Colors.orange[700],
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
         // L8.5 — animated coach-mode chip
         _CoachModeChip(mode: mode, accent: accent),
         const SizedBox(width: 8),
@@ -407,6 +459,19 @@ class _GlucoseChartCard extends StatelessWidget {
                       color: statusColor,
                       fontSize: 11,
                       fontWeight: FontWeight.w700),
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () => _showCGMConnectDialog(context),
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: GlucoNavColors.surfaceVariant,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.settings_input_antenna, size: 16, color: GlucoNavColors.textSecondary),
                 ),
               ),
             ],
@@ -768,7 +833,7 @@ class _ExerciseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final urgencyLabel = _urgencyLabel(spikeRisk, mode);
     return Container(
-      width: 150,
+      width: 155,
       margin: const EdgeInsets.only(right: 12),
       decoration: BoxDecoration(
         color: GlucoNavColors.card,
@@ -842,7 +907,7 @@ class _AddActivitySlotCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => _showLogModal(context, 'Activity', accent),
       child: Container(
-        width: 150,
+        width: 155,
         height: 140,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
@@ -1020,6 +1085,97 @@ void _showLogModal(BuildContext context, String type, Color accent) {
           const SizedBox(height: 32),
         ],
       ),
+    ),
+  );
+}
+
+/// Shows a dialog to pair the app with the CGM Simulator device.
+/// User enters: IP address, Port (default 8000), User ID
+/// On save, updates GlucoNavApiService base URL and userId in SharedPreferences.
+void _showCGMConnectDialog(BuildContext context) {
+  final ipCtrl = TextEditingController(text: 'localhost');
+  final portCtrl = TextEditingController(text: '8000');
+  final uIdCtrl = TextEditingController(text: GlucoNavApiService.userId);
+
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Row(
+        children: [
+          Icon(Icons.settings_input_antenna, color: GlucoNavColors.primary),
+          SizedBox(width: 8),
+          Text('Connect CGM Device', style: TextStyle(fontSize: 17)),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Get these values from the CGM Simulator page (http://localhost:5000).',
+            style: TextStyle(fontSize: 12, color: GlucoNavColors.textSecondary),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: ipCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Server IP',
+              hintText: 'e.g. 192.168.1.5 or localhost',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: portCtrl,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: 'Port',
+              hintText: '8000',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: uIdCtrl,
+            decoration: const InputDecoration(
+              labelText: 'User ID',
+              hintText: 'Paste User ID from simulator',
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: GlucoNavColors.primary),
+          onPressed: () async {
+            final ip = ipCtrl.text.trim();
+            final port = portCtrl.text.trim().isEmpty ? '8000' : portCtrl.text.trim();
+            final uid = uIdCtrl.text.trim();
+            if (ip.isEmpty || uid.isEmpty) return;
+
+            // Update the static base URL (runtime only — no hot restart needed)
+            await GlucoNavApiService.setServerConfig(ip: ip, port: port);
+            await GlucoNavApiService.setUserId(uid);
+
+            Navigator.pop(ctx);
+            if (ctx.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('✅ Connected to $ip:$port as $uid'),
+                  backgroundColor: GlucoNavColors.primary,
+                ),
+              );
+              // Trigger immediate dashboard reload
+              context.read<GlucoNavDashboardBloc>().add(const LoadDashboard());
+            }
+          },
+          child: const Text('Connect', style: TextStyle(color: Colors.white)),
+        ),
+      ],
     ),
   );
 }

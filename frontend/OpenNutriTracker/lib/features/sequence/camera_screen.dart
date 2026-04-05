@@ -15,8 +15,11 @@ import 'sequence_overlay_screen.dart';
 /// - Calls real `analyzeImageBytes()` which POSTs to `/api/v1/analyze-meal`
 ///   and falls back to mock JSON if backend is unreachable.
 /// - Shows linear progress + status text during upload
+enum CameraScanMode { meal, glucometer }
+
 class CameraScreen extends StatefulWidget {
-  const CameraScreen({super.key});
+  final CameraScanMode mode;
+  const CameraScreen({super.key, this.mode = CameraScanMode.meal});
 
   @override
   State<CameraScreen> createState() => _CameraScreenState();
@@ -61,6 +64,14 @@ class _CameraScreenState extends State<CameraScreen> {
       _statusText = 'Uploading image…';
     });
 
+    if (widget.mode == CameraScanMode.glucometer) {
+      await _analyseGlucometer();
+    } else {
+      await _analyseMeal();
+    }
+  }
+
+  Future<void> _analyseMeal() async {
     try {
       setState(() => _statusText = 'Detecting foods with AI…');
       final result = await _api.analyzeImageBytes(_imageBytes!);
@@ -85,6 +96,31 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
+  Future<void> _analyseGlucometer() async {
+    try {
+      setState(() => _statusText = 'Reading your glucometer…');
+      final glucoseValue = await _api.analyzeGlucometerBytes(_imageBytes!);
+      if (!mounted) return;
+      if (glucoseValue != null) {
+        Navigator.pop(context); // go back to wherever camera was opened from
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('📊 Glucose logged: ${glucoseValue.round()} mg/dL'),
+            backgroundColor: GlucoNavColors.primary,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+        // The BLoC will pick it up on its 10s pulse automatically
+      } else {
+        setState(() => _error = 'Could not read glucometer. Try a clearer photo.');
+      }
+    } catch (e) {
+      setState(() => _error = 'Error: $e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
@@ -94,12 +130,33 @@ class _CameraScreenState extends State<CameraScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          'Scan My Plate',
-          style: TextStyle(
+        title: Text(
+          widget.mode == CameraScanMode.glucometer ? 'Log Glucometer' : 'Scan My Plate',
+          style: const TextStyle(
               color: GlucoNavColors.primary, fontWeight: FontWeight.bold),
         ),
         leading: const BackButton(color: GlucoNavColors.primary),
+        actions: [
+          IconButton(
+            icon: Icon(
+              widget.mode == CameraScanMode.glucometer ? Icons.restaurant : Icons.monitor_heart,
+              color: GlucoNavColors.primary,
+            ),
+            tooltip: widget.mode == CameraScanMode.glucometer ? 'Switch to Meal Scan' : 'Switch to Glucometer',
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => CameraScreen(
+                    mode: widget.mode == CameraScanMode.glucometer
+                        ? CameraScanMode.meal
+                        : CameraScanMode.glucometer,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: Padding(
@@ -110,7 +167,7 @@ class _CameraScreenState extends State<CameraScreen> {
               Expanded(
                 child: _imageBytes != null
                     ? _ImagePreview(bytes: _imageBytes!)
-                    : const _EmptyPlaceholder(),
+                    : _EmptyPlaceholder(mode: widget.mode),
               ),
 
               const SizedBox(height: 20),
@@ -167,9 +224,9 @@ class _CameraScreenState extends State<CameraScreen> {
                     child: ElevatedButton.icon(
                       onPressed: _analyse,
                       icon: const Icon(Icons.auto_awesome, color: Colors.white),
-                      label: const Text(
-                        'Analyse My Plate →',
-                        style: TextStyle(
+                      label: Text(
+                        widget.mode == CameraScanMode.glucometer ? 'Read Glucose →' : 'Analyse My Plate →',
+                        style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 15),
@@ -204,9 +261,38 @@ class _ImagePreview extends StatelessWidget {
 }
 
 class _EmptyPlaceholder extends StatelessWidget {
-  const _EmptyPlaceholder();
+  final CameraScanMode mode;
+  const _EmptyPlaceholder({required this.mode});
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) {
+    if (mode == CameraScanMode.glucometer) {
+      return Container(
+        decoration: BoxDecoration(
+          color: GlucoNavColors.surfaceVariant,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: GlucoNavColors.primary.withOpacity(0.3)),
+        ),
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.monitor_heart, size: 72, color: GlucoNavColors.primary),
+              SizedBox(height: 16),
+              Text('📸 Take a clear photo of your glucometer display',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: GlucoNavColors.textSecondary, fontSize: 14)),
+              SizedBox(height: 6),
+              Text(
+                "we'll read the glucose value automatically.",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: GlucoNavColors.textSecondary, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return Container(
         decoration: BoxDecoration(
           color: GlucoNavColors.surfaceVariant,
           borderRadius: BorderRadius.circular(20),
@@ -230,6 +316,7 @@ class _EmptyPlaceholder extends StatelessWidget {
           ),
         ),
       );
+  }
 }
 
 class _PickButton extends StatelessWidget {

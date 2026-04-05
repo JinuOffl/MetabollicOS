@@ -16,21 +16,19 @@ class GlucoNavTrendsScreen extends StatefulWidget {
 
 class _GlucoNavTrendsScreenState extends State<GlucoNavTrendsScreen> {
   // ── Demo data ──────────────────────────────────────────────────────────────
-  static const double _tirPercent = 71.0;   // Time-in-Range 70–140 mg/dL
-  static const int _streakDays = 12;
-  static const double _avgGlucose = 118.0;  // mg/dL
-  static const double _avgSpike = 22.0;     // avg post-meal delta mg/dL
-  static const int _activitiesCompleted = 9;
+
 
   // Weekly glucose readings (Sun → Sat) continually in mg/dL
   static const _weeklyReadings = [135.0, 128.0, 142.0, 119.0, 124.0, 116.0, 111.0];
 
   late Future<Map<String, dynamic>?> _profileFuture;
+  late Future<Map<String, dynamic>?> _statsFuture;
 
   @override
   void initState() {
     super.initState();
     _profileFuture = GlucoNavApiService().getUserProfile();
+    _statsFuture = GlucoNavApiService().getUserStats();
   }
 
   @override
@@ -58,51 +56,65 @@ class _GlucoNavTrendsScreenState extends State<GlucoNavTrendsScreen> {
                 const SizedBox(height: 24),
               ],
               
-              // ── Row 1: TiR donut + streak badge ───────────────────────────────
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: _TirDonutCard(tirPercent: _tirPercent)),
-                  const SizedBox(width: 12),
-                  const Expanded(child: _StreakCard(streakDays: _streakDays)),
-                ],
-              ),
-          const SizedBox(height: 16),
+              // ── Stats ───────────────────────────────────────────────────────────
+              FutureBuilder<Map<String, dynamic>?>(
+                future: _statsFuture,
+                builder: (context, statsSnap) {
+                  final stats = statsSnap.data;
+                  final tirPercent = (stats?['time_in_range_pct'] as num?)?.toDouble() ?? 71.0;
+                  final streakDays = (stats?['streak_days'] as num?)?.toInt() ?? 12;
+                  final avgGlucose = (stats?['avg_glucose_mgdl'] as num?)?.toDouble() ?? 118.0;
+                  final avgSpike = (stats?['avg_post_meal_spike'] as num?)?.toDouble() ?? 22.0;
+                  final activitiesDone = (stats?['activities_done_7d'] as num?)?.toInt() ?? 9;
 
-          // ── Stats row ──────────────────────────────────────────────────────
-          Row(
-            children: [
-              Expanded(
-                child: _StatCard(
-                  label: 'Avg Glucose',
-                  value: '${_avgGlucose.round()}',
-                  unit: 'mg/dL',
-                  icon: Icons.water_drop_outlined,
-                  color: GlucoNavColors.primary,
-                ),
+                  return Column(
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: _TirDonutCard(tirPercent: tirPercent)),
+                          const SizedBox(width: 12),
+                          Expanded(child: _StreakCard(streakDays: streakDays)),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _StatCard(
+                              label: 'Avg Glucose',
+                              value: '${avgGlucose.round()}',
+                              unit: 'mg/dL',
+                              icon: Icons.water_drop_outlined,
+                              color: GlucoNavColors.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _StatCard(
+                              label: 'Avg Post-meal Spike',
+                              value: '+${avgSpike.round()}',
+                              unit: 'mg/dL',
+                              icon: Icons.trending_up,
+                              color: GlucoNavColors.secondary,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _StatCard(
+                              label: 'Activities Done',
+                              value: '$activitiesDone',
+                              unit: 'this week',
+                              icon: Icons.directions_walk,
+                              color: GlucoNavColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StatCard(
-                  label: 'Avg Post-meal Spike',
-                  value: '+${_avgSpike.round()}',
-                  unit: 'mg/dL',
-                  icon: Icons.trending_up,
-                  color: GlucoNavColors.secondary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StatCard(
-                  label: 'Activities Done',
-                  value: '$_activitiesCompleted',
-                  unit: 'this week',
-                  icon: Icons.directions_walk,
-                  color: GlucoNavColors.primary,
-                ),
-              ),
-            ],
-          ),
           const SizedBox(height: 20),
 
           // ── Weekly sparkline ───────────────────────────────────────────────
@@ -114,8 +126,8 @@ class _GlucoNavTrendsScreenState extends State<GlucoNavTrendsScreen> {
           const SizedBox(height: 32),
 
           // ── Demo Shortcuts (Migrated from Diary) ───────────────────────
-          const Text('Demo Shortcuts', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: GlucoNavColors.textPrimary)),
-          const SizedBox(height: 8),
+          const Text('Demo Shortcuts', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: GlucoNavColors.textPrimary)),
+          const SizedBox(height: 4),
           const Text('Quick-access buttons for hackathon demo', style: TextStyle(fontSize: 12, color: GlucoNavColors.textSecondary)),
           const SizedBox(height: 16),
           _DemoButton(

@@ -51,17 +51,27 @@ class DashboardLoading extends GlucoNavDashboardState {
 class DashboardLoaded extends GlucoNavDashboardState {
   final RecommendResponse response;
   final int streakDays;
+  final bool isLiveData; // true = real API, false = mock fallback
 
-  const DashboardLoaded({required this.response, this.streakDays = 12});
+  const DashboardLoaded({
+    required this.response,
+    this.streakDays = 12,
+    this.isLiveData = false,
+  });
 
-  DashboardLoaded copyWith({RecommendResponse? response, int? streakDays}) =>
+  DashboardLoaded copyWith({
+    RecommendResponse? response,
+    int? streakDays,
+    bool? isLiveData,
+  }) =>
       DashboardLoaded(
         response: response ?? this.response,
         streakDays: streakDays ?? this.streakDays,
+        isLiveData: isLiveData ?? this.isLiveData,
       );
 
   @override
-  List<Object?> get props => [response, streakDays];
+  List<Object?> get props => [response, streakDays, isLiveData];
 }
 
 class DashboardError extends GlucoNavDashboardState {
@@ -79,7 +89,7 @@ class GlucoNavDashboardBloc
 
   // Cache last context values so UpdateContext can send them to the API
   double? _lastSleepScore;
-  double? _lastGlucose;
+  double? _lastKnownGlucose; // set whenever a CGM reading arrives
 
   Timer? _pulseTimer;
 
@@ -104,52 +114,87 @@ class GlucoNavDashboardBloc
   Future<void> _onLoad(
       LoadDashboard event, Emitter<GlucoNavDashboardState> emit) async {
     emit(const DashboardLoading());
+    bool isLive = false;
+    RecommendResponse response;
     try {
-      // I1.1 — uses fetchRecommendations() which tries real API then falls back
-      final response = await _api.fetchRecommendations(
+      // Directly call the real API (not fetchRecommendations) so we can
+      // distinguish success (isLive=true) from mock fallback (isLive=false).
+      response = await _api.getRecommendations(
+        GlucoNavApiService.userId,
         sleepScore: _lastSleepScore,
-        currentGlucose: _lastGlucose,
+        currentGlucose: _lastKnownGlucose,
       );
-      final streak =
-          state is DashboardLoaded ? (state as DashboardLoaded).streakDays : 12;
-      emit(DashboardLoaded(response: response, streakDays: streak));
-    } catch (e) {
-      emit(DashboardError(e.toString()));
+      isLive = true;
+    } catch (_) {
+      response = await _api.getRecommendationsMock();
+      isLive = false;
     }
+    if (response.currentGlucose != null) {
+      _lastKnownGlucose = response.currentGlucose;
+    }
+    final streak =
+        state is DashboardLoaded ? (state as DashboardLoaded).streakDays : 12;
+    emit(DashboardLoaded(
+      response: response,
+      streakDays: streak,
+      isLiveData: isLive,
+    ));
   }
 
   Future<void> _onPulse(
       DashboardPulse event, Emitter<GlucoNavDashboardState> emit) async {
     // Silent refresh — don't emit Loading state
+    if (state is! DashboardLoaded) return;
+    bool isLive = false;
+    RecommendResponse response;
     try {
-      final response = await _api.fetchRecommendations(
+      response = await _api.getRecommendations(
+        GlucoNavApiService.userId,
         sleepScore: _lastSleepScore,
-        currentGlucose: _lastGlucose,
+        currentGlucose: _lastKnownGlucose,
       );
-      if (state is DashboardLoaded) {
-        emit((state as DashboardLoaded).copyWith(response: response));
-      }
-    } catch (_) {}
+      isLive = true;
+    } catch (_) {
+      response = await _api.getRecommendationsMock();
+      isLive = false;
+    }
+    if (response.currentGlucose != null) {
+      _lastKnownGlucose = response.currentGlucose;
+    }
+    emit((state as DashboardLoaded).copyWith(
+      response: response,
+      isLiveData: isLive,
+    ));
   }
 
   Future<void> _onUpdateContext(
       UpdateContext event, Emitter<GlucoNavDashboardState> emit) async {
     // Cache context values for subsequent LoadDashboard calls
     if (event.sleepScore != null) _lastSleepScore = event.sleepScore;
-    if (event.currentGlucose != null) _lastGlucose = event.currentGlucose;
+    if (event.currentGlucose != null) _lastKnownGlucose = event.currentGlucose;
 
+    bool isLive = false;
+    RecommendResponse response;
     try {
-      // I1.1 — pass context to real API so spike_risk updates live
-      final response = await _api.fetchRecommendations(
+      response = await _api.getRecommendations(
+        GlucoNavApiService.userId,
         sleepScore: _lastSleepScore,
-        currentGlucose: _lastGlucose,
+        currentGlucose: _lastKnownGlucose,
       );
-      final streak =
-          state is DashboardLoaded ? (state as DashboardLoaded).streakDays : 12;
-      emit(DashboardLoaded(response: response, streakDays: streak));
-    } catch (e) {
-      // Don't show error on context update — keep existing state
+      isLive = true;
+    } catch (_) {
+      response = await _api.getRecommendationsMock();
     }
+    if (response.currentGlucose != null) {
+      _lastKnownGlucose = response.currentGlucose;
+    }
+    final streak =
+        state is DashboardLoaded ? (state as DashboardLoaded).streakDays : 12;
+    emit(DashboardLoaded(
+      response: response,
+      streakDays: streak,
+      isLiveData: isLive,
+    ));
   }
 
   void _onIncrementStreak(

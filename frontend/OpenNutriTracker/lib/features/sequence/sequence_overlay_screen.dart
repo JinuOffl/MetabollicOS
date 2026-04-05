@@ -19,15 +19,7 @@ class SequenceOverlayScreen extends StatelessWidget {
     required this.result,
   });
 
-  // Approximate overlay positions for up to 5 items (left/top as fraction).
-  // Design decision #3: approximate regions, NOT pixel-precise bounding boxes.
-  static const _overlayPositions = [
-    Offset(0.12, 0.15), // step 1 — top-left
-    Offset(0.55, 0.50), // step 2 — centre-right
-    Offset(0.20, 0.65), // step 3 — bottom-left
-    Offset(0.70, 0.15), // step 4 — top-right
-    Offset(0.45, 0.75), // step 5 — bottom-centre
-  ];
+
 
   @override
   Widget build(BuildContext context) {
@@ -46,11 +38,10 @@ class SequenceOverlayScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // ── L6.2 — Photo + numbered badge overlays ─────────────────────
+            // ── L6.2 — Photo overlays ─────────────────────
             _MealPhotoWithBadges(
               imageBytes: imageBytes,
               steps: result.eatingSequence,
-              positions: _overlayPositions,
             ),
 
             // ── L6.3 + L6.4 — Step list + spike comparison ─────────────────
@@ -97,12 +88,10 @@ class SequenceOverlayScreen extends StatelessWidget {
 class _MealPhotoWithBadges extends StatelessWidget {
   final Uint8List imageBytes;
   final List<EatingStep> steps;
-  final List<Offset> positions;
 
   const _MealPhotoWithBadges({
     required this.imageBytes,
     required this.steps,
-    required this.positions,
   });
 
   @override
@@ -122,10 +111,7 @@ class _MealPhotoWithBadges extends StatelessWidget {
             ),
             // Dark gradient at bottom for legibility
             Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 60,
+              bottom: 0, left: 0, right: 0, height: 60,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -136,53 +122,25 @@ class _MealPhotoWithBadges extends StatelessWidget {
                 ),
               ),
             ),
-            // Numbered badges
-            ...steps.asMap().entries.map((entry) {
-              final i = entry.key;
-              final step = entry.value;
-              final pos = i < positions.length
-                  ? positions[i]
-                  : Offset(0.5, 0.5);
-              return Positioned(
-                left: pos.dx * width - 18,
-                top: pos.dy * height - 18,
-                child: _StepBadge(
-                  number: step.step,
-                  emoji: step.categoryEmoji,
+            // Count label at bottom-left corner
+            Positioned(
+              bottom: 10, left: 14,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              );
-            }),
+                child: Text(
+                  '${steps.length} food${steps.length == 1 ? '' : 's'} detected',
+                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
           ],
         ),
       );
     });
-  }
-}
-
-class _StepBadge extends StatelessWidget {
-  final int number;
-  final String emoji;
-  const _StepBadge({required this.number, required this.emoji});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: GlucoNavColors.primary,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 2),
-        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 6)],
-      ),
-      child: Center(
-        child: Text(
-          '$number',
-          style: const TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
-        ),
-      ),
-    );
   }
 }
 
@@ -220,77 +178,58 @@ class _StepCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: GlucoNavColors.card,
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: Color(0xFFE5E7EB))),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          children: [
-            // Step number circle
-            Container(
-              width: 36,
-              height: 36,
-              decoration: const BoxDecoration(
-                color: GlucoNavColors.primary,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  '${step.step}',
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14),
-                ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Step number badge
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: GlucoNavColors.primary,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                '${step.step}',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
               ),
             ),
-            const SizedBox(width: 12),
-            // Food info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(step.categoryEmoji,
-                          style: const TextStyle(fontSize: 16)),
-                      const SizedBox(width: 6),
-                      Text(step.food,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              color: GlucoNavColors.textPrimary)),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: GlucoNavColors.surfaceVariant,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(step.category,
-                            style: const TextStyle(
-                                fontSize: 10,
-                                color: GlucoNavColors.primary,
-                                fontWeight: FontWeight.w600)),
+          ),
+          const SizedBox(width: 12),
+          // Food info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(step.categoryEmoji, style: const TextStyle(fontSize: 15)),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        step.food,
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: GlucoNavColors.textPrimary),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(step.reason,
-                      style: const TextStyle(
-                          fontSize: 12,
-                          color: GlucoNavColors.textSecondary)),
-                ],
-              ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: GlucoNavColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(step.category, style: const TextStyle(fontSize: 9, color: GlucoNavColors.primary, fontWeight: FontWeight.w700)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(step.reason, style: const TextStyle(fontSize: 11, color: GlucoNavColors.textSecondary)),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

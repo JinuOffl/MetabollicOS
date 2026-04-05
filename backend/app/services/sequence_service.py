@@ -56,6 +56,7 @@ Your task:
 1. Identify the primary macro category of each item: Fiber, Protein, Fat, or Carb.
 2. Order them to minimise post-meal blood glucose spike using the research-backed rule:
    Fiber → Protein → Fat → Carb
+   Return one step per detected food item in the eating_sequence array.
 3. For each item in the ordered list, give a short reason (1 sentence, max 12 words).
 4. Estimate:
    - "spike_without_order_mg_dl": approximate glucose rise if eaten in random order
@@ -98,39 +99,9 @@ async def generate_eating_sequence(
     prompt = _SEQUENCE_PROMPT.format(food_list=food_list_str)
 
     model = _get_gemini_model()
-    import google.generativeai as genai
-
-    response_schema = {
-        "type": "object",
-        "properties": {
-            "eating_sequence": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "step": {"type": "integer"},
-                        "food": {"type": "string"},
-                        "category": {"type": "string"},
-                        "reason": {"type": "string"},
-                    },
-                    "required": ["step", "food", "category", "reason"]
-                }
-            },
-            "spike_without_order_mg_dl": {"type": "integer"},
-            "spike_with_order_mg_dl": {"type": "integer"},
-            "reduction_percent": {"type": "integer"},
-        },
-        "required": ["eating_sequence", "spike_without_order_mg_dl", "spike_with_order_mg_dl", "reduction_percent"]
-    }
 
     try:
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.GenerationConfig(
-                response_mime_type="application/json",
-                response_schema=response_schema
-            )
-        )
+        response = model.generate_content(prompt)
         raw_text = response.text.strip()
         logger.debug("Gemini raw response: %s", raw_text[:500])
     except Exception as exc:

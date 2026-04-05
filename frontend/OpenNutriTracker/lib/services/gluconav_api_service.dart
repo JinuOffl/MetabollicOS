@@ -26,7 +26,7 @@ import '../models/sequence_result.dart';
 class GlucoNavApiService {
   // Use localhost for same-machine Chrome demo (flutter run -d chrome)
   // Change to your WiFi IP if testing from a separate device
-  static const String _base = 'http://localhost:8000/api/v1';
+  static String _base = 'http://localhost:8000/api/v1';
 
   /// Active user ID. Set during onboarding; defaults to demo_user_experienced.
   static String userId = 'demo_user_experienced';
@@ -43,6 +43,12 @@ class GlucoNavApiService {
       final savedId = prefs.getString('user_id');
       if (savedId != null && savedId.isNotEmpty) {
         userId = savedId;
+        // Restore server config if saved
+        final savedIp   = prefs.getString('server_ip');
+        final savedPort = prefs.getString('server_port') ?? '8000';
+        if (savedIp != null && savedIp.isNotEmpty) {
+          _base = 'http://$savedIp:$savedPort/api/v1';
+        }
         return true;
       }
     } catch (_) {}
@@ -58,12 +64,22 @@ class GlucoNavApiService {
     } catch (_) {}
   }
 
+  /// Update the backend IP and port at runtime (from CGM Connect dialog).
+  static Future<void> setServerConfig({required String ip, String port = '8000'}) async {
+    _base = 'http://$ip:$port/api/v1';
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('server_ip', ip);
+      await prefs.setString('server_port', port);
+    } catch (_) {}
+  }
+
   // ── Health check ──────────────────────────────────────────────────────────
 
   Future<bool> isBackendAvailable() async {
     try {
       final res = await http
-          .get(Uri.parse('http://localhost:8000/health'))
+          .get(Uri.parse('${_base.replaceAll('/api/v1', '')}/health'))
           .timeout(const Duration(seconds: 3));
       return res.statusCode == 200;
     } catch (_) {
@@ -130,6 +146,38 @@ class GlucoNavApiService {
     }
   }
 
+  /// Sends glucometer photo to backend → extracts glucose value → logs it.
+  /// Returns the extracted glucose value (mg/dL) or null if extraction failed.
+  Future<double?> analyzeGlucometerBytes(Uint8List bytes) async {
+    try {
+      final uri = Uri.parse('$_base/analyze-glucometer').replace(
+        queryParameters: {'user_id': userId},
+      );
+      final req = http.MultipartRequest('POST', uri);
+      req.files.add(
+        http.MultipartFile.fromBytes(
+          'image', bytes,
+          filename: 'glucometer.jpg',
+          contentType: MediaType('image', 'jpeg'),
+        ),
+      );
+      final streamed = await req.send().timeout(const Duration(seconds: 30));
+      final res = await http.Response.fromStream(streamed);
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        final glucoseValue = (data['glucose_mgdl'] as num?)?.toDouble();
+        if (glucoseValue != null) {
+          // Also log it to the DB via the standard glucose-reading endpoint
+          await logGlucose(glucoseMgDl: glucoseValue);
+        }
+        return glucoseValue;
+      }
+    } catch (e) {
+      debugPrint('⚠️ Glucometer API error: $e');
+    }
+    return null; // Return null so CameraScreen can show a proper error message
+  }
+
   // ── Onboarding ────────────────────────────────────────────────────────────
 
   Future<String?> onboardUser(Map<String, dynamic> payload) async {
@@ -159,6 +207,28 @@ class GlucoNavApiService {
     } catch (_) {}
     return _mockUserProfile;
   }
+
+  Future<Map<String, dynamic>?> getUserStats() async {
+    if (forceMock) return _mockUserStats;
+    try {
+      final res = await http.get(Uri.parse('$_base/users/$userId/stats'))
+          .timeout(const Duration(seconds: 8));
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>;
+      }
+    } catch (_) {}
+    return _mockUserStats;
+  }
+
+  static const _mockUserStats = {
+    'user_id': 'demo_user_experienced',
+    'streak_days': 14,
+    'time_in_range_pct': 71.0,
+    'avg_glucose_mgdl': 118.0,
+    'avg_post_meal_spike': 22.0,
+    'activities_done_7d': 9,
+    'total_glucose_readings': 28,
+  };
 
   // ── Feedback (fire-and-forget, errors silenced) ───────────────────────────
 
@@ -298,6 +368,8 @@ const _mockRecommend = {
   'context_warning': null,
 };
 
+// NOTE: This mock has 3 items (Idli, Sambar, Chutney). Real responses are dynamic
+// and will have as many steps as the number of foods detected in the photo.
 const _mockSequence = {
   'detected_items': [
     {'label': 'Idli',    'confidence': 0.91},

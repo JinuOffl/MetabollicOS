@@ -7,7 +7,7 @@ import random
 import math
 
 # --- CONFIGURATION ---
-SERVER_IP = "10.60.4.75"  # Main Backend IP — change to 'localhost' if same machine
+SERVER_IP = "localhost"  # Default: same machine. Change via web UI below.
 USER_ID = "c48edd6f-727f-48f1-be3b-158e5a3cb38c"  # Default demo user
 
 app = Flask(__name__)
@@ -52,10 +52,7 @@ def background_simulator():
         time.sleep(10)
 
 
-@app.route('/')
-def dashboard():
-    """The HTML/JS interface for the Sensor Hub."""
-    return render_template_string("""
+HTML_TEMPLATE = """
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -284,6 +281,22 @@ def dashboard():
 
             <!-- Main content -->
             <div class="main">
+                <!-- Config Card -->
+                <div class="card" style="margin-bottom: 24px;">
+                  <h3 style="margin:0 0 12px; font-size:14px; color:var(--muted);">⚙️ BACKEND CONFIG</h3>
+                  <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                    <input id="cfgIp" type="text" value="{{ server_ip }}" placeholder="localhost"
+                      style="flex:2; padding:8px 12px; background:#0a0f1e; border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:Inter;">
+                    <input id="cfgUser" type="text" value="{{ user_id }}" placeholder="demo_user_experienced"
+                      style="flex:3; padding:8px 12px; background:#0a0f1e; border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:Inter;">
+                    <button onclick="saveConfig()" 
+                      style="padding:8px 20px; background:var(--accent); border:none; border-radius:8px; color:#0a0f1e; font-weight:700; cursor:pointer;">
+                      Apply
+                    </button>
+                  </div>
+                  <p id="cfgStatus" style="margin:8px 0 0; font-size:12px; color:var(--muted);"></p>
+                </div>
+
                 <!-- Hero row: glucose reading + pairing -->
                 <div class="hero-row">
                     <div class="readout-box">
@@ -296,7 +309,7 @@ def dashboard():
                     </div>
                     <div class="pair-card">
                         <div class="pair-label">Paired User ID</div>
-                        <input class="pair-input" id="userIdInput" type="text" value="{{ uid }}" placeholder="Paste Device Pairing ID...">
+                        <input class="pair-input" id="userIdInput" type="text" value="{{ user_id }}" placeholder="Paste Device Pairing ID...">
                         <button class="btn-pair" onclick="updateUid()">⚡ Pair This Device</button>
                         <div class="pair-status" id="pairStatus">✓ Device paired and pushing data</div>
                     </div>
@@ -323,13 +336,26 @@ def dashboard():
 
                 <!-- Footer -->
                 <div class="footer">
-                    <span>TARGET BACKEND: {{ ip }}:8000</span>
+                    <span>TARGET BACKEND: {{ server_ip }}:8000</span>
                     <span id="timestamp">LAST SYNC: --:--:--</span>
                 </div>
             </div>
         </div>
 
         <script>
+            async function saveConfig() {
+              const ip = document.getElementById('cfgIp').value.trim();
+              const uid = document.getElementById('cfgUser').value.trim();
+              const res = await fetch('/config', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({server_ip: ip, user_id: uid})
+              });
+              const data = await res.json();
+              document.getElementById('cfgStatus').textContent = 
+                `✅ Now pushing to http://${data.server_ip}:8000 as ${data.user_id}`;
+            }
+
             const ctx = document.getElementById('liveChart').getContext('2d');
             const DANGER_THRESHOLD = 200;
 
@@ -443,7 +469,26 @@ def dashboard():
         </script>
     </body>
     </html>
-    """, ip=SERVER_IP, uid=USER_ID)
+"""
+
+@app.route('/')
+def dashboard():
+    """The HTML/JS interface for the Sensor Hub."""
+    return render_template_string(HTML_TEMPLATE, server_ip=SERVER_IP, user_id=USER_ID)
+
+@app.route('/config', methods=['POST'])
+def set_config():
+    global SERVER_IP, USER_ID
+    data = request.json
+    if 'server_ip' in data:
+        SERVER_IP = data['server_ip']
+    if 'user_id' in data:
+        USER_ID = data['user_id']
+    return jsonify({"server_ip": SERVER_IP, "user_id": USER_ID, "status": "updated"})
+
+@app.route('/config', methods=['GET'])
+def get_config():
+    return jsonify({"server_ip": SERVER_IP, "user_id": USER_ID})
 
 
 @app.route('/spike', methods=['POST'])
