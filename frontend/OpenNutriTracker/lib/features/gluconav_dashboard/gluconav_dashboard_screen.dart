@@ -38,6 +38,10 @@ class _DashboardViewState extends State<_DashboardView> {
   double _sleepScore = 0.7;
   double _glucoseValue = 125;
 
+  List<DietRecommendation>? _activeDiets;
+  List<ExerciseRecommendation>? _activeExercises;
+  RecommendResponse? _lastResp;
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<GlucoNavDashboardBloc, GlucoNavDashboardState>(
@@ -74,6 +78,12 @@ class _DashboardViewState extends State<_DashboardView> {
         final resp = loaded.response;
         final mode = resp.coachMode;
         final accent = GlucoNavColors.forCoachMode(mode);
+
+        if (_lastResp != resp) {
+          _lastResp = resp;
+          _activeDiets = resp.dietRecommendations.take(3).toList();
+          _activeExercises = resp.exerciseRecommendations.take(2).toList();
+        }
 
         return Scaffold(
           backgroundColor: GlucoNavColors.background,
@@ -118,40 +128,93 @@ class _DashboardViewState extends State<_DashboardView> {
 
                 // ── Meal recommendations ───────────────────────────────────
                 _SectionHeader(
-                  label: _mealSectionLabel(mode),
+                  label: 'Meals Today',
                   icon: Icons.restaurant_menu,
                   color: accent,
                 ),
+                const SizedBox(height: 12),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ..._activeDiets!.map((m) => GestureDetector(
+                            onLongPress: () {
+                              final alternatives = resp.dietRecommendations
+                                  .where((d) => !_activeDiets!.contains(d))
+                                  .toList();
+                              if (alternatives.isEmpty) return;
+                              _showMealSwapModal(context, m, alternatives, accent, (selected) {
+                                setState(() {
+                                  final idx = _activeDiets!.indexOf(m);
+                                  if (idx != -1) _activeDiets![idx] = selected;
+                                });
+                              });
+                            },
+                            child: _MealCard(meal: m, mode: mode, accent: accent),
+                          )),
+                      _AddMealSlotCard(accent: accent),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 8),
-                ...resp.dietRecommendations
-                    .map((m) => _MealCard(meal: m, mode: mode, accent: accent)),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {},
+                    child: Text('Eating order matters ↗', style: TextStyle(color: accent, fontSize: 13)),
+                  ),
+                ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // ── Exercise recommendations ───────────────────────────────
                 _SectionHeader(
-                  label: _exerciseSectionLabel(mode),
+                  label: 'Activity',
                   icon: Icons.directions_walk,
                   color: accent,
                 ),
-                const SizedBox(height: 8),
-                ...resp.exerciseRecommendations.map((e) => _ExerciseCard(
-                      exercise: e,
-                      spikeRisk: resp.spikeRisk,
-                      mode: mode,
-                      accent: accent,
-                      onDone: () {
-                        context
-                            .read<GlucoNavDashboardBloc>()
-                            .add(const IncrementStreak());
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(_doneCopy(mode)),
-                            backgroundColor: accent,
-                          ),
-                        );
-                      },
-                    )),
+                const SizedBox(height: 12),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ..._activeExercises!.map((e) => GestureDetector(
+                            onLongPress: () {
+                              final alternatives = resp.exerciseRecommendations
+                                  .where((ex) => !_activeExercises!.contains(ex))
+                                  .toList();
+                              if (alternatives.isEmpty) return;
+                              _showExerciseSwapModal(context, e, alternatives, accent, (selected) {
+                                setState(() {
+                                  final idx = _activeExercises!.indexOf(e);
+                                  if (idx != -1) _activeExercises![idx] = selected;
+                                });
+                              });
+                            },
+                            child: _ExerciseCard(
+                              exercise: e,
+                              spikeRisk: resp.spikeRisk,
+                              mode: mode,
+                              accent: accent,
+                              onDone: () {
+                                context
+                                    .read<GlucoNavDashboardBloc>()
+                                    .add(const IncrementStreak());
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(_doneCopy(mode)),
+                                    backgroundColor: accent,
+                                  ),
+                                );
+                              },
+                            ),
+                          )),
+                      _AddActivitySlotCard(accent: accent),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -182,18 +245,6 @@ class _DashboardViewState extends State<_DashboardView> {
         const SizedBox(width: 12),
       ],
     );
-  }
-
-  String _mealSectionLabel(String mode) {
-    if (mode == 'supportive') return 'Meals you might enjoy today 💚';
-    if (mode == 'balanced') return 'Recommended meals';
-    return 'Top meal picks for you 🎯';
-  }
-
-  String _exerciseSectionLabel(String mode) {
-    if (mode == 'supportive') return 'Gentle movement ideas 🌿';
-    if (mode == 'balanced') return 'Post-meal activity';
-    return 'Activity snacks to crush the spike 💪';
   }
 
   String _doneCopy(String mode) {
@@ -432,70 +483,89 @@ class _MealCard extends StatelessWidget {
     final delta = meal.predictedGlucoseDelta;
     final isGood = meal.isLowSpike;
     final spikeColor = isGood ? GlucoNavColors.spikeLow : GlucoNavColors.spikeHigh;
-    final showSpikeColor = mode != 'supportive' || isGood; // L8 — hide red in supportive
+    final showSpikeColor = mode != 'supportive' || isGood;
 
-    return Card(
-      color: GlucoNavColors.card,
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 10),
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: Color(0xFFE5E7EB))),
+    return Container(
+      width: 140,
+      margin: const EdgeInsets.only(right: 12),
+      decoration: BoxDecoration(
+        color: GlucoNavColors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withOpacity(0.3)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 52,
-              height: 52,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: showSpikeColor
-                    ? spikeColor.withOpacity(0.12)
-                    : GlucoNavColors.surfaceVariant,
+                color: showSpikeColor ? spikeColor.withOpacity(0.12) : GlucoNavColors.surfaceVariant,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
-                child: delta != null
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('+${delta.round()}',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: showSpikeColor ? spikeColor : GlucoNavColors.textSecondary)),
-                          Text('mg/dL',
-                              style: TextStyle(
-                                  fontSize: 8,
-                                  color: showSpikeColor ? spikeColor : GlucoNavColors.textSecondary)),
-                        ],
-                      )
-                    : Icon(Icons.restaurant, color: accent, size: 24),
+                child: Icon(Icons.restaurant, color: showSpikeColor ? spikeColor : accent, size: 20),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(meal.name,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                          color: GlucoNavColors.textPrimary)),
-                  if (meal.cuisine != null)
-                    Text(meal.cuisine!,
-                        style: const TextStyle(
-                            fontSize: 11, color: GlucoNavColors.textSecondary)),
-                  if (meal.reason != null) ...[
-                    const SizedBox(height: 4),
-                    Text(meal.reason!,
-                        style: const TextStyle(
-                            fontSize: 11, color: GlucoNavColors.textSecondary)),
-                  ],
-                ],
+            const SizedBox(height: 12),
+            Text(meal.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: GlucoNavColors.textPrimary)),
+            if (meal.cuisine != null)
+              Text(meal.cuisine!, style: const TextStyle(fontSize: 10, color: GlucoNavColors.textSecondary)),
+            const SizedBox(height: 12),
+            if (delta != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: showSpikeColor ? spikeColor.withOpacity(0.12) : GlucoNavColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '+${delta.round()} mg/dL',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: showSpikeColor ? spikeColor : GlucoNavColors.textSecondary),
+                ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AddMealSlotCard extends StatelessWidget {
+  final Color accent;
+  const _AddMealSlotCard({required this.accent});
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _showLogModal(context, 'Meal', accent),
+      child: Container(
+        width: 140,
+        height: 140,
+        margin: const EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: accent.withOpacity(0.5)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: accent.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.add, color: accent),
             ),
+            const SizedBox(height: 8),
+            Text('Log a Meal', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: accent)),
           ],
         ),
       ),
@@ -520,72 +590,51 @@ class _ExerciseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final urgencyLabel = _urgencyLabel(spikeRisk, mode);
-    return Card(
-      color: GlucoNavColors.card,
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 10),
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: accent.withOpacity(0.3))),
+    return Container(
+      width: 150,
+      margin: const EdgeInsets.only(right: 12),
+      decoration: BoxDecoration(
+        color: GlucoNavColors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withOpacity(0.3)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                      color: accent.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(10)),
-                  child: Text('${exercise.durationMinutes ?? "?"} min',
-                      style: TextStyle(
-                          color: accent, fontWeight: FontWeight.bold, fontSize: 13)),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(exercise.name,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                          color: GlucoNavColors.textPrimary)),
-                ),
-                if (exercise.glucoseBenefitMgDl != null)
-                  Text('−${exercise.glucoseBenefitMgDl!.round()} mg/dL',
-                      style: const TextStyle(
-                          color: GlucoNavColors.spikeLow,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13)),
-              ],
-            ),
-            if (exercise.reason != null) ...[
-              const SizedBox(height: 6),
-              Text(exercise.reason!,
-                  style: const TextStyle(fontSize: 11, color: GlucoNavColors.textSecondary)),
-            ],
+            Icon(Icons.directions_walk, color: accent, size: 24),
+            const SizedBox(height: 10),
+            Text(exercise.name, maxLines: 2, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: GlucoNavColors.textPrimary)),
+            const SizedBox(height: 6),
+            if (exercise.durationMinutes != null || exercise.glucoseBenefitMgDl != null)
+              Wrap(
+                spacing: 4,
+                children: [
+                  if (exercise.durationMinutes != null)
+                    Text('${exercise.durationMinutes}m', style: const TextStyle(fontSize: 11, color: GlucoNavColors.textSecondary)),
+                  if (exercise.glucoseBenefitMgDl != null)
+                    Text('−${exercise.glucoseBenefitMgDl!.round()}', style: const TextStyle(fontSize: 11, color: GlucoNavColors.spikeLow, fontWeight: FontWeight.bold)),
+                ],
+              ),
             if (urgencyLabel != null) ...[
               const SizedBox(height: 6),
-              Text(urgencyLabel,
-                  style: const TextStyle(
-                      fontSize: 11,
-                      color: GlucoNavColors.spikeHigh,
-                      fontWeight: FontWeight.w500)),
+              Text(urgencyLabel, style: const TextStyle(fontSize: 10, color: GlucoNavColors.spikeHigh, fontWeight: FontWeight.w500)),
             ],
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
+              height: 32,
               child: ElevatedButton(
                 onPressed: onDone,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: accent,
-                  foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  padding: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                child: Text(_doneBtnLabel(mode)),
+                child: Text(_doneBtnLabel(mode), style: const TextStyle(fontSize: 11)),
               ),
             ),
           ],
@@ -596,16 +645,206 @@ class _ExerciseCard extends StatelessWidget {
 
   String? _urgencyLabel(String risk, String mode) {
     if (mode == 'supportive') return null;
-    if (risk == 'high') return '⚡ High spike risk — start moving!';
-    if (risk == 'medium') return 'Moderate risk — a walk will help';
+    if (risk == 'high') return '⚡ Spike risk';
+    if (risk == 'medium') return 'Moderate risk';
     return null;
   }
 
   String _doneBtnLabel(String mode) {
     if (mode == 'supportive') return 'Done 💚';
-    if (mode == 'balanced') return 'Mark complete';
+    if (mode == 'balanced') return 'Complete';
     return 'Done! 🔥';
   }
+}
+
+class _AddActivitySlotCard extends StatelessWidget {
+  final Color accent;
+  const _AddActivitySlotCard({required this.accent});
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _showLogModal(context, 'Activity', accent),
+      child: Container(
+        width: 150,
+        height: 140,
+        margin: const EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: accent.withOpacity(0.5)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: accent.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.add, color: accent),
+            ),
+            const SizedBox(height: 8),
+            Text('Log Activity', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: accent)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+void _showMealSwapModal(BuildContext context, DietRecommendation current, List<DietRecommendation> alternatives, Color accent, Function(DietRecommendation) onSwap) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (ctx) => Container(
+      height: MediaQuery.of(ctx).size.height * 0.6,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Swap ${current.name}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text('Pick a delicious alternative that maintains your glucose stability.', style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 16),
+          Expanded(
+            child: ListView.builder(
+              itemCount: alternatives.length,
+              itemBuilder: (ctx, i) {
+                final m = alternatives[i];
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.restaurant, color: GlucoNavColors.primary),
+                  title: Text(m.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Text("${m.cuisine ?? 'Global'} • GI: ${(m.gi ?? 0.0).round()} • Spike: +${(m.predictedGlucoseDelta ?? 0.0).round()}"),
+                  trailing: IconButton(
+                    icon: Icon(Icons.swap_horiz, color: accent),
+                    onPressed: () {
+                      onSwap(m);
+                      Navigator.pop(ctx);
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+void _showExerciseSwapModal(BuildContext context, ExerciseRecommendation current, List<ExerciseRecommendation> alternatives, Color accent, Function(ExerciseRecommendation) onSwap) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (ctx) => Container(
+      height: MediaQuery.of(ctx).size.height * 0.6,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Swap ${current.name}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text('Find an alternative activity that fits your mood.', style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 16),
+          Expanded(
+            child: ListView.builder(
+              itemCount: alternatives.length,
+              itemBuilder: (ctx, i) {
+                final ex = alternatives[i];
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.directions_walk, color: GlucoNavColors.primary),
+                  title: Text(ex.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Text("${ex.durationMinutes ?? 10}m • Benefit: -${ex.glucoseBenefitMgDl?.round() ?? 10} mg/dL"),
+                  trailing: IconButton(
+                    icon: Icon(Icons.swap_horiz, color: accent),
+                    onPressed: () {
+                      onSwap(ex);
+                      Navigator.pop(ctx);
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+void _showLogModal(BuildContext context, String type, Color accent) {
+  final controller = TextEditingController();
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (ctx) => Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(ctx).viewInsets.bottom,
+        left: 20, right: 20, top: 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(type == 'Meal' ? Icons.restaurant : Icons.directions_walk, color: accent),
+              const SizedBox(width: 8),
+              Text('Log a $type', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: type == 'Meal' ? 'e.g. 2 Idlis and Coffee' : 'e.g. 15 min Brisk Walk',
+              filled: true,
+              fillColor: GlucoNavColors.background,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            ),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: accent,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () {
+                if (controller.text.isNotEmpty) {
+                  // Fire and forget feedback API call
+                  GlucoNavApiService().logFeedback(
+                    itemId: 'manual_${DateTime.now().millisecondsSinceEpoch}',
+                    itemType: type.toLowerCase(),
+                    interactionType: 'logged',
+                  );
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('$type Logged Successfully!'), backgroundColor: accent),
+                  );
+                }
+              },
+              child: const Text('Add to Log', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ),
+          const SizedBox(height: 32),
+        ],
+      ),
+    ),
+  );
 }
 
 class _CoachModeChip extends StatelessWidget {

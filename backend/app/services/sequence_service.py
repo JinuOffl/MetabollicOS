@@ -98,9 +98,39 @@ async def generate_eating_sequence(
     prompt = _SEQUENCE_PROMPT.format(food_list=food_list_str)
 
     model = _get_gemini_model()
+    import google.generativeai as genai
+
+    response_schema = {
+        "type": "object",
+        "properties": {
+            "eating_sequence": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "step": {"type": "integer"},
+                        "food": {"type": "string"},
+                        "category": {"type": "string"},
+                        "reason": {"type": "string"},
+                    },
+                    "required": ["step", "food", "category", "reason"]
+                }
+            },
+            "spike_without_order_mg_dl": {"type": "integer"},
+            "spike_with_order_mg_dl": {"type": "integer"},
+            "reduction_percent": {"type": "integer"},
+        },
+        "required": ["eating_sequence", "spike_without_order_mg_dl", "spike_with_order_mg_dl", "reduction_percent"]
+    }
 
     try:
-        response = model.generate_content(prompt)
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.GenerationConfig(
+                response_mime_type="application/json",
+                response_schema=response_schema
+            )
+        )
         raw_text = response.text.strip()
         logger.debug("Gemini raw response: %s", raw_text[:500])
     except Exception as exc:
@@ -123,6 +153,10 @@ async def generate_eating_sequence(
     if not required.issubset(result.keys()):
         logger.warning("Gemini response missing keys. Using stub.")
         return _stub_sequence(detected_foods)
+        
+    # Enforce strictly sequential step numbers (addresses LLM numbering bugs)
+    for i, item in enumerate(result.get("eating_sequence", [])):
+        item["step"] = i + 1
 
     return result
 

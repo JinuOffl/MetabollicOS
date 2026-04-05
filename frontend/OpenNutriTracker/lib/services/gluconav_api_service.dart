@@ -32,14 +32,17 @@ class GlucoNavApiService {
 
   // ── Init from SharedPreferences ───────────────────────────────────────────
 
-  /// Call once in main() before runApp(). Loads persisted user_id.
-  static Future<void> initUserId() async {
+  /// Call once in main() before runApp(). Loads persisted user_id. Returns true if user exists.
+  static Future<bool> initUserId() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      userId = prefs.getString('user_id') ?? 'demo_user_experienced';
-    } catch (_) {
-      userId = 'demo_user_experienced';
-    }
+      final savedId = prefs.getString('user_id');
+      if (savedId != null && savedId.isNotEmpty) {
+        userId = savedId;
+        return true;
+      }
+    } catch (_) {}
+    return false;
   }
 
   /// Persist user_id after onboarding.
@@ -117,22 +120,12 @@ class GlucoNavApiService {
 
   // ── Onboarding ────────────────────────────────────────────────────────────
 
-  Future<String?> onboardUser({
-    required String diabetesType,
-    required String hbA1cBand,
-    required String cuisinePreference,
-    required String dietType,
-  }) async {
+  Future<String?> onboardUser(Map<String, dynamic> payload) async {
     try {
       final res = await http.post(
         Uri.parse('$_base/users/onboard'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'diabetes_type': diabetesType,
-          'hba1c_band': hbA1cBand,
-          'cuisine_preference': cuisinePreference,
-          'diet_type': dietType,
-        }),
+        body: jsonEncode(payload),
       );
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as Map<String, dynamic>;
@@ -142,6 +135,17 @@ class GlucoNavApiService {
       }
     } catch (_) {}
     return null;
+  }
+
+  Future<Map<String, dynamic>?> getUserProfile() async {
+    if (forceMock) return _mockUserProfile;
+    try {
+      final res = await http.get(Uri.parse('$_base/users/$userId'));
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>;
+      }
+    } catch (_) {}
+    return _mockUserProfile;
   }
 
   // ── Feedback (fire-and-forget, errors silenced) ───────────────────────────
@@ -311,4 +315,20 @@ const _mockSequence = {
   'spike_without_order_mg_dl': 67,
   'spike_with_order_mg_dl': 24,
   'reduction_percent': 64,
+};
+
+const _mockUserProfile = {
+  "user_id": "demo_user_experienced",
+  "profile": {
+    "diabetes_type": "type2",
+    "hba1c_band": "moderate",
+    "cuisine_preference": "south_indian",
+    "diet_type": "vegetarian",
+    "age": 32,
+    "weight_kg": 72.5,
+    "height_cm": 175.0,
+    "gender": "male",
+    "goal": "lose_weight",
+    "activity_level": "light"
+  }
 };

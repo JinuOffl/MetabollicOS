@@ -5,15 +5,22 @@
 ## Team
 | Member | Role |
 | ------ | ---- |
+# GlucoNav — Project Context
+> **For Medathon 2026 | Team Innofusion**
+> Last updated: 2026-04-05
+
+## Team
+| Member | Role |
+| ------ | ---- |
 | **J**  | ML Engineer — Recommendation Engine |
 | **K**  | Backend Engineer — FastAPI, Vision AI, Burnout |
 | **L**  | Frontend Engineer — Flutter UI, BLoC |
 
 ---
 
-## Current State — PHASE 6 DEMO PREP ✅
+## Current State — PHASE 7 UI REDESIGN ✅ COMPLETE
 
-**Both tracks complete. Integration complete. Demo data ready. Rehearse → Present.**
+**Phase 7 is complete.** We have successfully shifted GlucoNav to a 3-tab architecture, integrated OpenNutriTracker native onboarding logic mapped to our FastAPI backend, built long-press smart-swap modals for Meals and Activities on the dashboard, added dynamic text-logging modals, and enforced strict typed JSON for Gemini Flash in our sequence service.
 
 ---
 
@@ -46,17 +53,18 @@ Flutter project root: `frontend/OpenNutriTracker/lib/`
 
 | File | Status |
 |------|--------|
-| `main.dart` | ✅ 4-tab shell, async SharedPreferences init, Diary demo shortcuts |
+| `main.dart` | ✅ 3-tab shell, async SharedPreferences init |
 | `core/gluconav_colors.dart` | ✅ Brand palette + coach-mode/spike helpers |
 | `models/sequence_result.dart` | ✅ DetectedItem, EatingStep, SequenceResult |
 | `models/recommendation_response.dart` | ✅ DietRecommendation, ExerciseRecommendation, RecommendResponse |
 | `services/gluconav_api_service.dart` | ✅ Real API + mock fallback; userId SharedPreferences |
-| `features/gluconav_dashboard/` | ✅ BLoC + screen: coach mode, spike risk, Scan My Plate |
+| `features/gluconav_dashboard/` | ✅ 3-tab redesign: horizontal scroll cards |
 | `features/sequence/camera_screen.dart` | ✅ image_picker + analyzeImageBytes → overlay |
 | `features/sequence/sequence_overlay_screen.dart` | ✅ badges, steps, spike comparison, Start Eating! |
 | `features/activity/activity_snack_bloc.dart` | ✅ 20-min Timer BLoC |
 | `features/activity/activity_snack_screen.dart` | ✅ countdown ring, exercise card, Done!, spike_risk urgency |
-| `features/trends/gluconav_trends_screen.dart` | ✅ 71% TiR donut, streak, bars, personalization proof |
+| `features/trends/gluconav_trends_screen.dart` | ✅ Profile Tab (TiR donut, streak, demo shortcuts, UserBio top card) |
+| `features/onboarding/gluco_onboarding_screen.dart`| ✅ NEW Native PageView capturing user health params → FastAPI onboard |
 
 ---
 
@@ -151,3 +159,6 @@ Set `VISION_USE_STUB=1` in `backend/.env` if HuggingFace ViT + Gemini aren't loa
 | 12 | 2026-04-05 | L   | L6–L9: Flutter lib from scratch |
 | 13 | 2026-04-05 | K+L | Phase 6.5: real API integration |
 | 14 | 2026-04-05 | K+L | **Phase 6 Demo Prep.** Fixed 5 seed_demo.py bugs. Updated 4 models (user, meal, exercise, glucose). Fixed 2 schemas (feedback, glucose). Fixed 2 routers (feedback, glucose). Created verify_demo.py (11 checks). Created DEMO_SCRIPT.md (8-step demo, Q&A, key numbers). S1.1–S1.4 complete. |
+| 15 | 2026-04-05 | L   | **Phase 7 UI Redesign A.** Navigation shell from 4 to 3-tabs. Home Screen redesigned to use horizontal scroll blocks. Added Diary/Demo shortcuts to Profile screen. |
+| 16 | 2026-04-05 | L+K | **Phase 7 UI Redesign B.** OpenNutriTracker native onboarding Flow. Dash log action modals. Long Press Meal & Activity swapper from ML stack. Strict JSON schema for Gemini. |
+| 17 | 2026-04-05 | K   | **Phase 7 Bug Fix.** Added missing columns (`gender`, `goal`, `activity_level`) to `user_profiles` SQLite table to resolve 500 error on onboarding completion. |

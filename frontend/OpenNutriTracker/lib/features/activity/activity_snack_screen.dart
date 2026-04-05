@@ -74,7 +74,7 @@ class _ActivitySnackView extends StatelessWidget {
         if (state is ActivityCompleted) {
           // L7.3 — log feedback to backend (fire-and-forget)
           GlucoNavApiService().logFeedback(
-            userId: 'demo_user_experienced',
+            userIdOverride: 'demo_user_experienced',
             itemId: exerciseId,
             itemType: 'exercise',
             interactionType: 'completed',
@@ -93,7 +93,7 @@ class _ActivitySnackView extends StatelessWidget {
         }
         if (state is ActivitySkipped) {
           GlucoNavApiService().logFeedback(
-            userId: 'demo_user_experienced',
+            userIdOverride: 'demo_user_experienced',
             itemId: exerciseId,
             itemType: 'exercise',
             interactionType: 'skipped',

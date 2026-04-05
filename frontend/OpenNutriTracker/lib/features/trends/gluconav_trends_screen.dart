@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/gluconav_colors.dart';
+import '../../services/gluconav_api_service.dart';
+import '../activity/activity_snack_screen.dart';
+import '../../main.dart'; // for GlucoNavApp
 
 /// L9.2 — Trends screen: 71% Time-in-Range donut + 12-day streak badge.
-///
-/// Data is hardcoded for the hackathon demo (demo_user_experienced profile).
-/// In production this pulls from GET /api/v1/glucose-readings/{user_id}.
-class GlucoNavTrendsScreen extends StatelessWidget {
+/// Extended with Bio Profile Data on top.
+class GlucoNavTrendsScreen extends StatefulWidget {
   const GlucoNavTrendsScreen({super.key});
 
+  @override
+  State<GlucoNavTrendsScreen> createState() => _GlucoNavTrendsScreenState();
+}
+
+class _GlucoNavTrendsScreenState extends State<GlucoNavTrendsScreen> {
   // ── Demo data ──────────────────────────────────────────────────────────────
   static const double _tirPercent = 71.0;   // Time-in-Range 70–140 mg/dL
   static const int _streakDays = 12;
@@ -16,8 +22,16 @@ class GlucoNavTrendsScreen extends StatelessWidget {
   static const double _avgSpike = 22.0;     // avg post-meal delta mg/dL
   static const int _activitiesCompleted = 9;
 
-  // Weekly glucose readings (Sun → Sat) in mg/dL — for the sparkline
+  // Weekly glucose readings (Sun → Sat) continually in mg/dL
   static const _weeklyReadings = [135.0, 128.0, 142.0, 119.0, 124.0, 116.0, 111.0];
+
+  late Future<Map<String, dynamic>?> _profileFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileFuture = GlucoNavApiService().getUserProfile();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,23 +41,32 @@ class GlucoNavTrendsScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         title: const Text(
-          'My Trends',
+          'Profile',
           style: TextStyle(
               color: GlucoNavColors.primary, fontWeight: FontWeight.bold),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-        children: [
-          // ── Row 1: TiR donut + streak badge ───────────────────────────────
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      body: FutureBuilder<Map<String, dynamic>?>(
+        future: _profileFuture,
+        builder: (context, snapshot) {
+          final profileData = snapshot.data?['profile'] as Map<String, dynamic>?;
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
             children: [
-              Expanded(child: _TirDonutCard(tirPercent: _tirPercent)),
-              const SizedBox(width: 12),
-              const Expanded(child: _StreakCard(streakDays: _streakDays)),
-            ],
-          ),
+              if (profileData != null) ...[
+                _UserBioCard(data: profileData),
+                const SizedBox(height: 24),
+              ],
+              
+              // ── Row 1: TiR donut + streak badge ───────────────────────────────
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: _TirDonutCard(tirPercent: _tirPercent)),
+                  const SizedBox(width: 12),
+                  const Expanded(child: _StreakCard(streakDays: _streakDays)),
+                ],
+              ),
           const SizedBox(height: 16),
 
           // ── Stats row ──────────────────────────────────────────────────────
@@ -88,6 +111,156 @@ class GlucoNavTrendsScreen extends StatelessWidget {
 
           // ── Personalization proof (demo) ───────────────────────────────────
           _PersonalizationCard(),
+          const SizedBox(height: 32),
+
+          // ── Demo Shortcuts (Migrated from Diary) ───────────────────────
+          const Text('Demo Shortcuts', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: GlucoNavColors.textPrimary)),
+          const SizedBox(height: 8),
+          const Text('Quick-access buttons for hackathon demo', style: TextStyle(fontSize: 12, color: GlucoNavColors.textSecondary)),
+          const SizedBox(height: 16),
+          _DemoButton(
+            icon: Icons.directions_walk,
+            label: 'Activity Snack — high spike risk',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ActivitySnackScreen(
+                  exerciseName: 'Brisk Walk',
+                  durationMinutes: 10,
+                  glucoseBenefitMgDl: 20,
+                  exerciseId: 'ex_001',
+                  spikeRisk: 'high',
+                  timerMinutes: 0,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _DemoButton(
+            icon: Icons.person_outlined,
+            label: 'Switch → demo_user_new',
+            color: GlucoNavColors.balancedAccent,
+            onTap: () {
+              GlucoNavApiService.userId = 'demo_user_new';
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Switched to demo_user_new'), backgroundColor: GlucoNavColors.balancedAccent),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _DemoButton(
+            icon: Icons.person,
+            label: 'Switch → demo_user_experienced',
+            onTap: () {
+              GlucoNavApiService.userId = 'demo_user_experienced';
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Switched to demo_user_experienced'), backgroundColor: GlucoNavColors.primary),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _DemoButton(
+            icon: Icons.delete_forever,
+            label: '🔴 Secret Demo Reset (Clear Data)',
+            color: Colors.red,
+            onTap: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.clear();
+              GlucoNavApiService.userId = 'demo_user_experienced';
+              if (!context.mounted) return;
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const GlucoNavApp(hasUser: false)),
+              );
+            },
+          ),
+        ],
+      );
+      }),
+    );
+  }
+}
+
+// ── Top User Bio Card ─────────────────────────────────────────────────────────
+class _UserBioCard extends StatelessWidget {
+  final Map<String, dynamic> data;
+  const _UserBioCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.white,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: const BorderSide(color: Color(0xFFE5E7EB))),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const CircleAvatar(
+                  backgroundColor: GlucoNavColors.primary,
+                  radius: 24,
+                  child: Icon(Icons.person, color: Colors.white, size: 28),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "${data['gender'] == 'female' ? 'Female' : 'Male'}, ${data['age']} yrs",
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: GlucoNavColors.textPrimary),
+                      ),
+                      Text(
+                        "${data['weight_kg']} kg | ${data['height_cm']} cm",
+                        style: const TextStyle(fontSize: 14, color: GlucoNavColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _Badge(Icons.medical_information, data['diabetes_type']?.toString().toUpperCase() ?? "TYPE 2"),
+                _Badge(Icons.flag, data['goal']?.toString().replaceAll('_', ' ').toUpperCase() ?? "GOAL"),
+                _Badge(Icons.directions_run, data['activity_level']?.toString().toUpperCase() ?? "SEDENTARY"),
+                _Badge(Icons.restaurant, data['diet_type']?.toString().toUpperCase() ?? "VEG"),
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Badge extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _Badge(this.icon, this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: GlucoNavColors.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: GlucoNavColors.primary),
+          const SizedBox(width: 4),
+          Text(text, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: GlucoNavColors.primary)),
         ],
       ),
     );
@@ -524,4 +697,32 @@ class _ComparisonRow extends StatelessWidget {
       ],
     );
   }
+}
+
+class _DemoButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  const _DemoButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color = GlucoNavColors.primary,
+  });
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: onTap,
+          icon: Icon(icon, color: color, size: 18),
+          label: Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+          style: OutlinedButton.styleFrom(
+            side: BorderSide(color: color),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+      );
 }

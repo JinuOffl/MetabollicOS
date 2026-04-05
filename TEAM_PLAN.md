@@ -44,6 +44,17 @@
 
 ---
 
+## PHASE 7 — UI Redesign & New Features ✅ / 🚧
+- [x] **7.1** — Streamline Navigation Shell to 3 tabs (Camera, Home, Profile)
+- [x] **7.2** — Refactor Home screen to horizontal scroll rows for Meals and Activity
+- [x] **7.3** — Consolidate Profile Tab with Diary, Trends, and Demo shortcuts
+- [x] **7.4** — Onboarding screens + extended profile display
+- [x] **7.5** — Meal / Activity logging popups instead of `+` camera routing
+- [x] **7.6** — Meal Swap (Long press recommended card for alternatives)
+- [x] **7.7** — Dynamic Order of Eating logic integration
+
+---
+
 ## Build Order (Final)
 
 ```
@@ -71,5 +82,8 @@ S1.5 Rehearse → PRESENT TO JUDGES 🏆
 | 12      | 2026-04-05 | L      | L6–L9: created lib/ from scratch, all screens |
 | 13      | 2026-04-05 | K+L    | Phase 6.5: real API wired, CORS fix, user-switch demo buttons |
 | 14      | 2026-04-05 | K+L    | **Phase 6 Demo Prep.** Fixed 5 bugs in seed_demo.py (User.id field, UserProfile fields, MealInteraction.glucose_delta, GlucoseReading.glucose_mgdl, User query field). Updated models: user.py (email/name/age/weight/height), meal.py (glucose_delta), exercise.py (soft FK), glucose.py (dual field). Fixed schemas: feedback.py (user_id), glucose.py (accepts both field names). Fixed routers: feedback.py (sets user_id), glucose.py (dual field). Created verify_demo.py (11 automated checks). Created DEMO_SCRIPT.md (8 steps, Q&A, numbers). **S1.1–S1.4 complete. Only S1.5 (rehearse) remains.** |
+| 15      | 2026-04-05 | L      | **Phase 7 UI Redesign (part A).** Migrated from 4 to 3-tab navigation. Converted AI Suggest to Home screen with horizontal scroll layouts for meals and activity. Merged Diary & Trends into Profile screen, including Demo shortcuts. |
+| 16      | 2026-04-05 | L+K    | **Phase 7 UI Redesign (part B).** Integrated OpenNutriTracker native onboarding Flow. Built action Modals for + cards logging to `/feedback`. Implemented UI Long Press Meal & Activity swapper from ML recommendations arrays. Refactored Gemini API format enforcement inside `sequence_service.py` to prevent fallbacks. |
+| 17      | 2026-04-05 | K      | **Phase 7 Bug Fix.** Added missing columns (`gender`, `goal`, `activity_level`) to `user_profiles` SQLite table to resolve 500 error on onboarding completion. |
 
 *Mark tasks `[/]` when starting, `[x]` when done. Always update `CONTEXT.md` after each session.*

@@ -32,5 +32,8 @@ class UserProfile(Base):
     age = Column(Integer, nullable=True)
     weight_kg = Column(Float, nullable=True)
     height_cm = Column(Float, nullable=True)
+    gender = Column(String, nullable=True)
+    goal = Column(String, nullable=True)
+    activity_level = Column(String, nullable=True)
 
     user = relationship("User", back_populates="profile")

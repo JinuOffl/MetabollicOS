@@ -62,6 +62,7 @@ cd backend
 python scripts/seed_demo.py       # creates demo_user_new + demo_user_experienced
 python scripts/verify_demo.py    # runs 11 automated checks — should all pass ✅
 ```
+*(Troubleshooting: If you encounter SQLite schema errors due to earlier model changes, simply delete `backend/gluconav.db` and re-run the seed commands above.)*
 
 Expected `verify_demo.py` output:
 ```
@@ -106,14 +107,16 @@ See **[DEMO_SCRIPT.md](./DEMO_SCRIPT.md)** for:
 
 | Step | Tab | Action | Key stat |
 |------|-----|--------|----------|
-| 1 | AI Suggest | Show Idli + Sambar as #1 | "+18 mg/dL predicted spike" |
-| 2 | Diary → AI Suggest | Switch new vs experienced | "59% better control after 14 days" |
-| 3 | AI Suggest | Tap "Scan My Plate" | Camera opens |
-| 4 | Camera | Pick food photo | ViT detects items |
-| 5 | Sequence overlay | Show numbered badges | "64% spike reduction with this order" |
-| 6 | Sequence overlay | Tap "Start Eating!" | 20-min timer starts |
-| 7 | Diary | Tap Activity Snack demo | Exercise card appears |
-| 8 | Trends | Show TiR + streak | "71% Time-in-Range, 12-day streak" |
+| 1 | Onboarding | Pick params | Creates structured user record |
+| 2 | Home | Show Idli + Sambar as #1 | "+18 mg/dL predicted spike" |
+| 3 | Profile → Home | Switch new vs experienced | "59% better control after 14 days" |
+| 4 | Home | Long Press Meal Card | Smart Meal Swap popup shown |
+| 5 | Home | Tap "Scan My Plate" | Camera opens |
+| 6 | Camera | Pick food photo | ViT detects items |
+| 7 | Sequence overlay | Show numbered badges | "64% spike reduction with this order" |
+| 8 | Sequence overlay | Tap "Start Eating!" | 20-min timer starts |
+| 9 | Application | Action Modal logging | Track arbitrary exercise & food via bottom sheets |
+| 10 | Profile | Show TiR + streak | "71% Time-in-Range, 12-day streak" |
 
 ---
 
@@ -165,9 +168,9 @@ backend/scripts/
 └── verify_demo.py        11 automated checks — run after seeding
 
 frontend/OpenNutriTracker/lib/
-├── main.dart             4-tab shell + SharedPreferences + Diary demo shortcuts
+├── main.dart             3-tab shell + Custom SharedPreferences Boot router
 ├── services/             gluconav_api_service.dart (real→mock fallback)
-└── features/             dashboard, sequence, activity, trends
+└── features/             dashboard, sequence, activity, trends (Profile), onboarding
 ```
 
 ---
@@ -179,8 +182,8 @@ frontend/OpenNutriTracker/lib/
 | CORS | `allow_origins=["*"]` in `main.py` |
 | Flutter web image upload | `MultipartFile.fromBytes()` + `MediaType('image','jpeg')` |
 | Backend unreachable | Auto-fallback to mock JSON |
-| User ID persistence | SharedPreferences — defaults to `demo_user_experienced` |
-| Demo user switching | Diary tab buttons |
+| User ID persistence | SharedPreferences — forces Onboarding if empty |
+| Demo user switching | Profile tab shortcuts (bottom list) |
 | Real-time spike_risk | sleepScore + currentGlucose passed to `/recommend` query params |
 | SQLite FKs | MealInteraction + ExerciseInteraction use soft FKs (no hard constraint) |
 

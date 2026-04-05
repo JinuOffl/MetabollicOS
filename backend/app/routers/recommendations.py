@@ -112,11 +112,14 @@ def get_recommendations(
         "regional_cuisine":  profile.cuisine_preference,
         "diet_preference":   profile.diet_type,
         "hba1c_band":        profile.hba1c_band,
+        "activity_level":    profile.activity_level or "sedentary",
+        "age_band":          "40s" if not profile.age else f"{(profile.age // 10) * 10}s",
     }
 
     # ── 2. Get diet + exercise recommendations ────────────────────────────
-    diet_raw      = get_diet_recommendations(profile_dict)
-    exercise_raw  = get_exercise_recommendations(profile_dict)
+    # Requesting top_n=10 to allow frontend to implement Meal Swaps from the remainder array.
+    diet_raw      = get_diet_recommendations(profile_dict, top_n=10)
+    exercise_raw  = get_exercise_recommendations(profile_dict, top_n=10)
 
     diet_list     = [_normalize_diet_item(d) for d in diet_raw]
     exercise_list = [_normalize_exercise_item(e) for e in exercise_raw]
