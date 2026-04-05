@@ -22,7 +22,7 @@ import '../models/sequence_result.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 class GlucoNavApiService {
-  static const String _base = 'http://localhost:8000/api/v1';
+  static const String _base = 'http://10.242.238.169:8000/api/v1';
 
   /// Active user ID. Set during onboarding; defaults to demo_user_experienced.
   static String userId = 'demo_user_experienced';
@@ -126,7 +126,7 @@ class GlucoNavApiService {
         Uri.parse('$_base/users/onboard'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(payload),
-      );
+      ).timeout(const Duration(seconds: 15));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as Map<String, dynamic>;
         final newId = data['user_id'] as String;

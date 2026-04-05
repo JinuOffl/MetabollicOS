@@ -78,6 +78,7 @@ class RecommendResponse {
   final String coachMode;   // "active" | "balanced" | "supportive"
   final double burnoutScore; // 0.0–10.0
   final String? contextWarning;
+  final double? currentGlucose;
 
   const RecommendResponse({
     this.userId,
@@ -87,6 +88,7 @@ class RecommendResponse {
     this.coachMode = 'active',
     this.burnoutScore = 0,
     this.contextWarning,
+    this.currentGlucose,
   });
 
   factory RecommendResponse.fromJson(Map<String, dynamic> j) =>
@@ -109,5 +111,6 @@ class RecommendResponse {
         burnoutScore:
             (j['burnout_score'] as num?)?.toDouble() ?? 0.0,
         contextWarning: j['context_warning'] as String?,
+        currentGlucose: (j['current_glucose'] as num?)?.toDouble(),
       );
 }

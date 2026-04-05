@@ -15,6 +15,7 @@ from typing import Optional
 
 from app.database import get_db
 from app.models.user import UserProfile
+from app.models.glucose import GlucoseReading # K5.2 — Real-time reactive data
 from app.schemas.recommendation import RecommendResponse
 from app.services.diet_engine import get_diet_recommendations
 from app.services.exercise_engine import get_exercise_recommendations
@@ -101,7 +102,22 @@ def get_recommendations(
 
     Context params (gi, sleep_score, steps, current_glucose) are optional.
     When provided they are used to compute spike_risk and context_warning.
+    If current_glucose is NOT provided, the latest entry from the 'glucose_readings' 
+    table is used automatically to enable real-time reactive recommendations.
     """
+    # ── 0. Real-time CGM logic ───────────────────────────────────────────
+    # If no manual glucose is provided, pull the absolute latest from the DB
+    actual_glucose = current_glucose
+    if actual_glucose is None:
+        latest_reading = (
+            db.query(GlucoseReading)
+            .filter(GlucoseReading.user_id == user_id)
+            .order_by(GlucoseReading.timestamp.desc())
+            .first()
+        )
+        if latest_reading:
+            actual_glucose = latest_reading.glucose_mgdl or latest_reading.value_mgdl
+            # print(f"📡 Real-time Logic: Using last CGM reading: {actual_glucose} mg/dL")
     # ── 1. Fetch user profile ─────────────────────────────────────────────
     profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
     if not profile:
@@ -134,11 +150,11 @@ def get_recommendations(
         gi=effective_gi,
         sleep_score=sleep_score,
         steps=steps,
-        current_glucose=current_glucose,
+        current_glucose=actual_glucose, # Use the synced variable
     )
 
     context_warning = get_context_warning(
-        current_glucose=current_glucose,
+        current_glucose=actual_glucose, # Use the synced variable
         sleep_score=sleep_score,
         spike_risk=spike_risk,
     )
@@ -159,4 +175,5 @@ def get_recommendations(
         spike_risk=spike_risk,
         coach_mode=coach_mode,
         burnout_score=burnout_score,
+        current_glucose=actual_glucose,
     )

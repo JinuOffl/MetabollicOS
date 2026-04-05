@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -14,6 +15,11 @@ abstract class GlucoNavDashboardEvent extends Equatable {
 
 class LoadDashboard extends GlucoNavDashboardEvent {
   const LoadDashboard();
+}
+
+/// Internal event fired every 10s to sync CGM data without showing a spinner.
+class DashboardPulse extends GlucoNavDashboardEvent {
+  const DashboardPulse();
 }
 
 /// Sent when user adjusts sleep slider or glucose field.
@@ -75,10 +81,24 @@ class GlucoNavDashboardBloc
   double? _lastSleepScore;
   double? _lastGlucose;
 
+  Timer? _pulseTimer;
+
   GlucoNavDashboardBloc(this._api) : super(const DashboardLoading()) {
     on<LoadDashboard>(_onLoad);
+    on<DashboardPulse>(_onPulse);
     on<UpdateContext>(_onUpdateContext);
     on<IncrementStreak>(_onIncrementStreak);
+
+    // K5.2 — Start periodic pulse to sync CGM simulator data
+    _pulseTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (!isClosed) add(const DashboardPulse());
+    });
+  }
+
+  @override
+  Future<void> close() {
+    _pulseTimer?.cancel();
+    return super.close();
   }
 
   Future<void> _onLoad(
@@ -96,6 +116,20 @@ class GlucoNavDashboardBloc
     } catch (e) {
       emit(DashboardError(e.toString()));
     }
+  }
+
+  Future<void> _onPulse(
+      DashboardPulse event, Emitter<GlucoNavDashboardState> emit) async {
+    // Silent refresh — don't emit Loading state
+    try {
+      final response = await _api.fetchRecommendations(
+        sleepScore: _lastSleepScore,
+        currentGlucose: _lastGlucose,
+      );
+      if (state is DashboardLoaded) {
+        emit((state as DashboardLoaded).copyWith(response: response));
+      }
+    } catch (_) {}
   }
 
   Future<void> _onUpdateContext(

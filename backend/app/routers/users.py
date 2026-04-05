@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+import uuid # K3.2 — manual ID generation for robust onboarding
 from app.database import get_db
 from app.models.user import User, UserProfile
 from app.schemas.user import OnboardRequest, UserResponse, UserProfileData
@@ -8,11 +9,12 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.post("/onboard", response_model=UserResponse)
 def onboard_user(request: OnboardRequest, db: Session = Depends(get_db)):
-    db_user = User()
+    db_user = User(id=str(uuid.uuid4())) # Manual ID generation
     db.add(db_user)
     db.flush()
     
     db_profile = UserProfile(
+        id=str(uuid.uuid4()), # Manual ID generation
         user_id=db_user.id,
         diabetes_type=request.diabetes_type,
         hba1c_band=request.hba1c_band,

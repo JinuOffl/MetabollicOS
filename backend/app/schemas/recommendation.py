@@ -57,6 +57,9 @@ class RecommendResponse(BaseModel):
     # K5.2 — spike risk
     spike_risk: str = "medium"             # "low" | "medium" | "high"
 
+    # CGM data sync
+    current_glucose: Optional[float] = None
+
     # K6.3 — burnout / coach mode
     coach_mode: str = "active"            # "active" | "balanced" | "supportive"
     burnout_score: float = 0.0            # 0.0–10.0

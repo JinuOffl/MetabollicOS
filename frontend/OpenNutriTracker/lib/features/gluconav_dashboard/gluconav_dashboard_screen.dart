@@ -83,6 +83,10 @@ class _DashboardViewState extends State<_DashboardView> {
           _lastResp = resp;
           _activeDiets = resp.dietRecommendations.take(3).toList();
           _activeExercises = resp.exerciseRecommendations.take(2).toList();
+          
+          if (resp.currentGlucose != null) {
+            _glucoseValue = resp.currentGlucose!;
+          }
         }
 
         return Scaffold(
@@ -212,6 +216,29 @@ class _DashboardViewState extends State<_DashboardView> {
                             ),
                           )),
                       _AddActivitySlotCard(accent: accent),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 48),
+                // K5.2 — Developer pairing ID for the Live Demo
+                Center(
+                  child: Column(
+                    children: [
+                      const Text('DEVICE PAIRING ID',
+                          style: TextStyle(
+                              fontSize: 10,
+                              color: GlucoNavColors.textSecondary,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2)),
+                      const SizedBox(height: 6),
+                      SelectableText(
+                        GlucoNavApiService.userId,
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: accent.withOpacity(0.6),
+                            fontFamily: 'monospace'),
+                      ),
+                      const SizedBox(height: 40),
                     ],
                   ),
                 ),
