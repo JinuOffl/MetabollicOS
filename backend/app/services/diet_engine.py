@@ -187,6 +187,10 @@ def get_diet_recommendations(
     # ── Context re-ranking ────────────────────────────────────────────────────
     results = []
     for meal in candidates:
+        # Hard exclude: vegetarian users NEVER see non-vegetarian meals
+        if diet_pref in ("vegetarian", "vegan") and not meal["is_vegetarian"]:
+            continue
+
         adj = 0.0
 
         # Sleep penalty: boost low-GI meals when sleep is poor
@@ -202,9 +206,10 @@ def get_diet_recommendations(
             if meal["glycemic_index"] > 70:
                 adj -= 0.30   # penalise high-GI when glucose is already high
 
-        # Diet preference filter (soft — reduce score rather than hard exclude)
-        if diet_pref in ("vegetarian", "vegan") and not meal["is_vegetarian"]:
-            adj -= 0.50
+        # Cuisine preference boost: reward meals matching user's regional preference
+        user_cuisine = user_profile.get("regional_cuisine", "")
+        if user_cuisine and meal.get("cuisine", "").lower() == user_cuisine.lower():
+            adj += 0.15
 
         predicted_spike = _estimate_spike(meal, sleep_score, current_glucose)
         reason = _build_reason(meal, sleep_score, current_glucose, adj)
@@ -227,8 +232,9 @@ def get_diet_recommendations(
             "is_vegetarian":      meal["is_vegetarian"],
             "reason":             reason,
             "score":              meal["score"] + adj,
-            "insulin_dose":       insulin_dose,         # ← NEW: None for Type 2
-            "carbs_g":            carbs_g,              # ← NEW: for frontend display
+            "insulin_dose":       insulin_dose,
+            "carbs_g":            carbs_g,
+            "image_url":          meal.get("image_url", ""),   # ← FIX: was being dropped
         })
 
     results.sort(key=lambda x: x["score"], reverse=True)

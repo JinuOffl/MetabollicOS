@@ -66,6 +66,7 @@ dependencies:
   animated_flip_counter: ^0.3.4
 
   mobile_scanner: ^6.0.2
+  fl_chart: ^0.69.0
 
   hive: ^2.2.3
   hive_flutter: ^1.1.0

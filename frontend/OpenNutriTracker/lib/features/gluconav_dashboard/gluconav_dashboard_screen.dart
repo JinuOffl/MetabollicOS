@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -35,7 +36,8 @@ class _DashboardView extends StatefulWidget {
 }
 
 class _DashboardViewState extends State<_DashboardView> {
-  double _sleepScore = 0.7;
+  // Glucose trend chart history (last 20 readings from CGM)
+  final List<double> _glucoseHistory = [120, 118, 122, 125, 130, 128, 135, 140, 138];
   double _glucoseValue = 125;
 
   List<DietRecommendation>? _activeDiets;
@@ -83,9 +85,12 @@ class _DashboardViewState extends State<_DashboardView> {
           _lastResp = resp;
           _activeDiets = resp.dietRecommendations.take(3).toList();
           _activeExercises = resp.exerciseRecommendations.take(2).toList();
-          
+
           if (resp.currentGlucose != null) {
             _glucoseValue = resp.currentGlucose!;
+            // Append to rolling history for the line chart (max 20 points)
+            _glucoseHistory.add(resp.currentGlucose!);
+            if (_glucoseHistory.length > 20) _glucoseHistory.removeAt(0);
           }
         }
 
@@ -103,19 +108,11 @@ class _DashboardViewState extends State<_DashboardView> {
                 if (resp.contextWarning != null && mode != 'supportive')
                   _WarningBanner(text: resp.contextWarning!),
 
-                // ── Context inputs ─────────────────────────────────────────
-                _ContextInputCard(
-                  sleepScore: _sleepScore,
-                  glucoseValue: _glucoseValue,
+                // ── Glucose trend chart (replaces sliders) ─────────────────
+                _GlucoseChartCard(
+                  glucoseHistory: _glucoseHistory,
+                  currentGlucose: _glucoseValue,
                   accent: accent,
-                  onSleepChanged: (v) {
-                    setState(() => _sleepScore = v);
-                    context.read<GlucoNavDashboardBloc>().add(
-                        UpdateContext(sleepScore: v, currentGlucose: _glucoseValue));
-                  },
-                  onGlucoseChanged: (v) {
-                    setState(() => _glucoseValue = v);
-                  },
                 ),
 
                 const SizedBox(height: 16),
@@ -312,89 +309,201 @@ class _WarningBanner extends StatelessWidget {
   }
 }
 
-class _ContextInputCard extends StatelessWidget {
-  final double sleepScore;
-  final double glucoseValue;
+/// Live glucose trend line chart — replaces the old sleep/glucose sliders.
+/// Shows the last 20 CGM readings, auto-colors red above 180 mg/dL.
+class _GlucoseChartCard extends StatelessWidget {
+  final List<double> glucoseHistory;
+  final double currentGlucose;
   final Color accent;
-  final ValueChanged<double> onSleepChanged;
-  final ValueChanged<double> onGlucoseChanged;
 
-  const _ContextInputCard({
-    required this.sleepScore,
-    required this.glucoseValue,
+  const _GlucoseChartCard({
+    required this.glucoseHistory,
+    required this.currentGlucose,
     required this.accent,
-    required this.onSleepChanged,
-    required this.onGlucoseChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: GlucoNavColors.card,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0xFFE5E7EB))),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Today's context",
-                style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: accent,
-                    fontSize: 14)),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                const Icon(Icons.bedtime_outlined, size: 16,
-                    color: GlucoNavColors.textSecondary),
-                const SizedBox(width: 6),
-                const Text('Sleep quality',
-                    style: TextStyle(
-                        fontSize: 12, color: GlucoNavColors.textSecondary)),
-                const Spacer(),
-                Text('${(sleepScore * 10).round()}/10',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: accent)),
-              ],
-            ),
-            Slider(
-              value: sleepScore,
-              min: 0,
-              max: 1,
-              divisions: 10,
-              activeColor: accent,
-              inactiveColor: accent.withOpacity(0.2),
-              onChanged: onSleepChanged,
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(Icons.water_drop_outlined, size: 16,
-                    color: GlucoNavColors.textSecondary),
-                const SizedBox(width: 6),
-                const Text('Current glucose',
-                    style: TextStyle(
-                        fontSize: 12, color: GlucoNavColors.textSecondary)),
-                const Spacer(),
-                Text('${glucoseValue.round()} mg/dL',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: accent)),
-              ],
-            ),
-            Slider(
-              value: glucoseValue,
-              min: 70,
-              max: 250,
-              divisions: 36,
-              activeColor: accent,
-              inactiveColor: accent.withOpacity(0.2),
-              onChanged: onGlucoseChanged,
-            ),
-          ],
-        ),
+    final isHigh = currentGlucose > 180;
+    final isLow  = currentGlucose < 70;
+    final chartColor = isHigh
+        ? GlucoNavColors.spikeHigh
+        : isLow
+            ? const Color(0xFF3B82F6)
+            : accent;
+
+    final statusText = isHigh
+        ? '⚠️ High glucose'
+        : isLow
+            ? '⚠️ Below target'
+            : '✓ In range';
+    final statusColor = isHigh
+        ? GlucoNavColors.spikeHigh
+        : isLow
+            ? const Color(0xFF3B82F6)
+            : GlucoNavColors.spikeLow;
+
+    // Build fl_chart spots
+    final spots = glucoseHistory.asMap().entries.map((e) {
+      return FlSpot(e.key.toDouble(), e.value);
+    }).toList();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: GlucoNavColors.card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: chartColor.withOpacity(0.25)),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Glucose Trend',
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: GlucoNavColors.textSecondary,
+                          letterSpacing: 0.8)),
+                  const SizedBox(height: 2),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        '${currentGlucose.round()}',
+                        style: TextStyle(
+                            fontSize: 40,
+                            fontWeight: FontWeight.w800,
+                            color: chartColor,
+                            letterSpacing: -1),
+                      ),
+                      const SizedBox(width: 4),
+                      const Text('mg/dL',
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: GlucoNavColors.textSecondary)),
+                    ],
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(100),
+                  border: Border.all(color: statusColor.withOpacity(0.4)),
+                ),
+                child: Text(
+                  statusText,
+                  style: TextStyle(
+                      color: statusColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          // Line chart
+          SizedBox(
+            height: 80,
+            child: spots.length < 2
+                ? Center(
+                    child: Text('Waiting for CGM data...',
+                        style: TextStyle(
+                            color: GlucoNavColors.textSecondary,
+                            fontSize: 12)))
+                : LineChart(
+                    LineChartData(
+                      minY: 50,
+                      maxY: 280,
+                      minX: 0,
+                      maxX: (spots.length - 1).toDouble(),
+                      clipData: const FlClipData.all(),
+                      gridData: FlGridData(
+                        show: true,
+                        drawVerticalLine: false,
+                        horizontalInterval: 60,
+                        getDrawingHorizontalLine: (v) => FlLine(
+                          color: GlucoNavColors.textSecondary.withOpacity(0.08),
+                          strokeWidth: 1,
+                        ),
+                      ),
+                      borderData: FlBorderData(show: false),
+                      titlesData: FlTitlesData(
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 30,
+                            interval: 70,
+                            getTitlesWidget: (v, _) => Text(
+                              v.round().toString(),
+                              style: const TextStyle(
+                                  fontSize: 9, color: GlucoNavColors.textSecondary),
+                            ),
+                          ),
+                        ),
+                        bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      ),
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: spots,
+                          isCurved: true,
+                          curveSmoothness: 0.3,
+                          color: chartColor,
+                          barWidth: 2.5,
+                          dotData: FlDotData(
+                            show: true,
+                            checkToShowDot: (spot, _) =>
+                                spot == spots.last,
+                            getDotPainter: (_, __, ___, ____) =>
+                                FlDotCirclePainter(
+                                    radius: 4,
+                                    color: chartColor,
+                                    strokeColor: Colors.white,
+                                    strokeWidth: 1.5),
+                          ),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                chartColor.withOpacity(0.18),
+                                chartColor.withOpacity(0.0),
+                              ],
+                            ),
+                          ),
+                        ),
+                        // 180 mg/dL danger threshold line
+                        LineChartBarData(
+                          spots: [FlSpot(0, 180), FlSpot((spots.length - 1).toDouble(), 180)],
+                          color: GlucoNavColors.spikeHigh.withOpacity(0.35),
+                          barWidth: 1,
+                          dashArray: [6, 4],
+                          dotData: const FlDotData(show: false),
+                          belowBarData: BarAreaData(show: false),
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 6),
+          const Text('↑ 180 mg/dL threshold  •  Real-time CGM data',
+              style: TextStyle(
+                  fontSize: 9,
+                  color: GlucoNavColors.textSecondary)),
+        ],
       ),
     );
   }
@@ -511,6 +620,7 @@ class _MealCard extends StatelessWidget {
     final isGood = meal.isLowSpike;
     final spikeColor = isGood ? GlucoNavColors.spikeLow : GlucoNavColors.spikeHigh;
     final showSpikeColor = mode != 'supportive' || isGood;
+    final hasImage = meal.imageUrl != null && meal.imageUrl!.isNotEmpty;
 
     return Container(
       width: 155,
@@ -520,74 +630,88 @@ class _MealCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: accent.withOpacity(0.3)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: (meal.imageUrl != null && meal.imageUrl!.isNotEmpty)
-                  ? Image.network(
-                      meal.imageUrl!,
-                      width: 56,
-                      height: 56,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        width: 56, height: 56,
-                        color: showSpikeColor ? spikeColor.withOpacity(0.12) : GlucoNavColors.surfaceVariant,
-                        child: Icon(Icons.restaurant, color: accent, size: 20),
-                      ),
-                    )
-                  : Container(
-                      width: 56, height: 56,
-                      color: showSpikeColor ? spikeColor.withOpacity(0.12) : GlucoNavColors.surfaceVariant,
-                      child: Icon(Icons.restaurant, color: showSpikeColor ? spikeColor : accent, size: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Full-width image banner ──────────────────────────────────────
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+            child: hasImage
+                ? Image.network(
+                    meal.imageUrl!,
+                    width: 155,
+                    height: 90,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (ctx, child, progress) {
+                      if (progress == null) return child;
+                      return Container(
+                        width: 155, height: 90,
+                        color: showSpikeColor ? spikeColor.withOpacity(0.08) : GlucoNavColors.surfaceVariant,
+                        child: Center(
+                          child: CircularProgressIndicator(strokeWidth: 2, color: accent),
+                        ),
+                      );
+                    },
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 155, height: 90,
+                      color: showSpikeColor ? spikeColor.withOpacity(0.08) : GlucoNavColors.surfaceVariant,
+                      child: Icon(Icons.restaurant, color: accent.withOpacity(0.4), size: 32),
                     ),
+                  )
+                : Container(
+                    width: 155, height: 90,
+                    color: showSpikeColor ? spikeColor.withOpacity(0.08) : GlucoNavColors.surfaceVariant,
+                    child: Icon(Icons.restaurant, color: showSpikeColor ? spikeColor.withOpacity(0.4) : accent.withOpacity(0.4), size: 32),
+                  ),
+          ),
+          // ── Text info ────────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(meal.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: GlucoNavColors.textPrimary)),
+                if (meal.cuisine != null)
+                  Text(meal.cuisine!, style: const TextStyle(fontSize: 10, color: GlucoNavColors.textSecondary)),
+                const SizedBox(height: 8),
+                if (delta != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: showSpikeColor ? spikeColor.withOpacity(0.12) : GlucoNavColors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '+${delta.round()} mg/dL',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: showSpikeColor ? spikeColor : GlucoNavColors.textSecondary),
+                    ),
+                  ),
+                if (meal.insulinDose != null) ...[
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6366F1).withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '💉 ${meal.insulinDose}',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Color(0xFF6366F1)),
+                    ),
+                  ),
+                ],
+              ],
             ),
-            const SizedBox(height: 12),
-            Text(meal.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: GlucoNavColors.textPrimary)),
-            if (meal.cuisine != null)
-              Text(meal.cuisine!, style: const TextStyle(fontSize: 10, color: GlucoNavColors.textSecondary)),
-            const SizedBox(height: 12),
-            if (delta != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: showSpikeColor ? spikeColor.withOpacity(0.12) : GlucoNavColors.surfaceVariant,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '+${delta.round()} mg/dL',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: showSpikeColor ? spikeColor : GlucoNavColors.textSecondary),
-                ),
-              ),
-            if (meal.insulinDose != null) ...[
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF6366F1).withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '💉 ${meal.insulinDose}',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 10,
-                      color: Color(0xFF6366F1)),
-                ),
-              ),
-            ],
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
+
 
 class _AddMealSlotCard extends StatelessWidget {
   final Color accent;
