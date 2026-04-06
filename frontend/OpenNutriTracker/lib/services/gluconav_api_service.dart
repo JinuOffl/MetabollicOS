@@ -26,7 +26,7 @@ import '../models/sequence_result.dart';
 class GlucoNavApiService {
   // Use localhost for same-machine Chrome demo (flutter run -d chrome)
   // Change to your WiFi IP if testing from a separate device
-  static String _base = 'http://localhost:8000/api/v1';
+  static String _base = 'http://10.240.206.169:8000/api/v1';
 
   /// Active user ID. Set during onboarding; defaults to demo_user_experienced.
   static String userId = 'demo_user_experienced';
@@ -120,30 +120,27 @@ class GlucoNavApiService {
   // ── Meal analysis (real → mock fallback, web-compatible) ─────────────────
 
   /// Web-compatible: sends raw bytes instead of dart:io File.
-  /// Tries real API; falls back to mock if backend is unreachable.
+  /// Uses Gemini Vision on the backend — returns real food detection results.
   Future<SequenceResult> analyzeImageBytes(Uint8List bytes) async {
     if (forceMock) return analyzeMealMock(bytes);
-    try {
-      final req =
-          http.MultipartRequest('POST', Uri.parse('$_base/analyze-meal'));
-      req.files.add(
-        http.MultipartFile.fromBytes(
-          'image',
-          bytes,
-          filename: 'meal.jpg',
-          contentType: MediaType('image', 'jpeg'),
-        ),
-      );
-      final streamed = await req.send().timeout(const Duration(seconds: 30));
-      final res = await http.Response.fromStream(streamed);
-      if (res.statusCode == 200) {
-        return SequenceResult.fromJson(
-            jsonDecode(res.body) as Map<String, dynamic>);
-      }
-      throw Exception('analyze-meal returned ${res.statusCode}');
-    } catch (_) {
-      return analyzeMealMock(bytes);
+    final req =
+        http.MultipartRequest('POST', Uri.parse('$_base/analyze-meal'));
+    req.files.add(
+      http.MultipartFile.fromBytes(
+        'image',
+        bytes,
+        filename: 'meal.jpg',
+        contentType: MediaType('image', 'jpeg'),
+      ),
+    );
+    final streamed = await req.send().timeout(const Duration(seconds: 45));
+    final res = await http.Response.fromStream(streamed);
+    if (res.statusCode == 200) {
+      return SequenceResult.fromJson(
+          jsonDecode(res.body) as Map<String, dynamic>);
     }
+    // Surface the real error — do NOT silently return mock food items
+    throw Exception('Meal analysis failed (${res.statusCode}): ${res.body}');
   }
 
   /// Sends glucometer photo to backend → extracts glucose value → logs it.
@@ -314,30 +311,21 @@ const _mockRecommend = {
   'diet_recommendations': [
     {
       'meal_id': 'meal_001',
-      'name': 'Idli + Sambar',
-      'cuisine': 'South Indian',
+      'name': 'Detected Meal 1',
+      'cuisine': 'Indian',
       'predicted_glucose_delta': 18.0,
       'gi': 38.0,
-      'reason': 'Low-GI; high fibre dampens spike',
-      'tags': ['vegetarian', 'south_indian'],
+      'reason': 'Low-GI food choice',
+      'tags': ['healthy'],
     },
     {
       'meal_id': 'meal_002',
-      'name': 'Moong Dal Cheela',
-      'cuisine': 'North Indian',
+      'name': 'Detected Meal 2',
+      'cuisine': 'Indian',
       'predicted_glucose_delta': 22.0,
       'gi': 42.0,
-      'reason': 'Low-GI food; moderate fibre; protein-rich',
-      'tags': ['vegetarian', 'north_indian'],
-    },
-    {
-      'meal_id': 'meal_003',
-      'name': 'Ragi Dosa',
-      'cuisine': 'South Indian',
-      'predicted_glucose_delta': 25.0,
-      'gi': 45.0,
-      'reason': 'Low-GI food; high fibre from ragi (finger millet)',
-      'tags': ['vegetarian', 'south_indian'],
+      'reason': 'Balanced protein and fibre',
+      'tags': ['balanced'],
     },
   ],
   'exercise_recommendations': [
@@ -372,28 +360,14 @@ const _mockRecommend = {
 // and will have as many steps as the number of foods detected in the photo.
 const _mockSequence = {
   'detected_items': [
-    {'label': 'Idli',    'confidence': 0.91},
-    {'label': 'Sambar',  'confidence': 0.76},
-    {'label': 'Chutney', 'confidence': 0.55},
+    {'label': 'Scanning...', 'confidence': 0.99},
   ],
   'eating_sequence': [
     {
       'step': 1,
-      'food': 'Sambar',
+      'food': 'Food Item',
       'category': 'Fiber',
-      'reason': 'Start with lentil broth — fibre slows glucose absorption',
-    },
-    {
-      'step': 2,
-      'food': 'Chutney',
-      'category': 'Fat',
-      'reason': 'Coconut fat further dampens the post-meal spike',
-    },
-    {
-      'step': 3,
-      'food': 'Idli',
-      'category': 'Carb',
-      'reason': 'Eat carbs last — your body handles them 64% better now',
+      'reason': 'Searching for sequence...',
     },
   ],
   'spike_without_order_mg_dl': 67,

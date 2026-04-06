@@ -7,8 +7,8 @@ import random
 import math
 
 # --- CONFIGURATION ---
-SERVER_IP = "localhost"  # Default: same machine. Change via web UI below.
-USER_ID = "c48edd6f-727f-48f1-be3b-158e5a3cb38c"  # Default demo user
+SERVER_IP = "10.240.206.169"  # Default: same machine. Change via web UI below.
+USER_ID = "demo_user_experienced"  # Default demo user
 
 app = Flask(__name__)
 
@@ -336,7 +336,7 @@ HTML_TEMPLATE = """
 
                 <!-- Footer -->
                 <div class="footer">
-                    <span>TARGET BACKEND: {{ server_ip }}:8000</span>
+                    <span>TARGET BACKEND: 10.240.206.169:8000</span>
                     <span id="timestamp">LAST SYNC: --:--:--</span>
                 </div>
             </div>
@@ -550,7 +550,7 @@ if __name__ == "__main__":
     threading.Thread(target=background_simulator, daemon=True).start()
     print("=" * 55)
     print("  🌡️  GlucoNav CGM Sensor Hub")
-    print(f"  🌍  UI: http://localhost:5000")
+    print(f"  🌍  UI: http://10.240.206.169:5000")
     print(f"  📡  Pushing to Backend: http://{SERVER_IP}:8000")
     print(f"  ⚡  POST /spike    — trigger 245 mg/dL spike")
     print(f"  ✅  POST /normalize — normalize glucose")

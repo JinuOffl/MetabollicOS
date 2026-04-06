@@ -204,7 +204,7 @@ async def _extract_glucose_from_image(image_bytes: bytes) -> Optional[float]:
     if not api_key:
         return None
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    model = genai.GenerativeModel("gemini-2.5-flash")
     
     import PIL.Image
     import io

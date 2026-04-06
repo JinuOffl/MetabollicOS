@@ -62,7 +62,7 @@ Starts the beautiful "Secondary Device" UI and simulates live glucose.
 ```powershell
 python backend/scripts/cgm_web_simulator.py
 ```
-*   **Access the Sensor Hub**: Open `http://localhost:5000` in your browser.
+*   **Access the Sensor Hub**: Open `http://10.240.206.169:5000` in your browser.
 *   **Pairing**: Paste the **Device Pairing ID** from the Flutter App into the hub's input box to link the data streams.
 
 ---

@@ -34,7 +34,7 @@ def _get_gemini_model():
             if not api_key:
                 raise EnvironmentError("GOOGLE_AI_KEY is not set in environment.")
             genai.configure(api_key=api_key)
-            _gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+            _gemini_model = genai.GenerativeModel("gemini-2.5-flash")
             logger.info("Gemini 1.5 Flash model initialised.")
         except Exception as exc:
             logger.error("Failed to initialise Gemini: %s", exc)

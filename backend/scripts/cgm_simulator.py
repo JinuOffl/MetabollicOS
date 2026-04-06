@@ -5,10 +5,10 @@ import math
 
 # --- Configuration ---
 # Use the demo user ID the app is currently showing
-USER_ID = "c48edd6f-727f-48f1-be3b-158e5a3cb38c" 
+USER_ID = "demo_user_experienced" 
 # When running on the same machine, 'localhost' works.
 # When running from another device, use the server's IP (e.g., '192.168.1.XX')
-BASE_URL = "http://10.60.4.75:8000/api/v1"
+BASE_URL = "http://10.240.206.169:8000/api/v1"
 
 def simulate_cgm():
     print(f"🚀 [GlucoNav] CGM SIMULATOR STARTING...")

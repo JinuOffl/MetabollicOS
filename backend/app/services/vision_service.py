@@ -1,122 +1,104 @@
 """
-vision_service.py  — K4.1
-ViT-based Indian food detection.
-Model: DrishtiSharma/finetuned-ViT-IndianFood-Classification-v3 (HuggingFace)
+vision_service.py
+Gemini Vision-based Indian food detection.
+
+Primary:  Gemini 1.5 Flash vision API — detects whatever is actually in the photo.
+Fallback: Empty list (caller raises 422) if Gemini is also unavailable.
 
 Usage:
     from app.services.vision_service import detect_foods
     items = await detect_foods(image_bytes)
-    # returns: [{"label": "Idli", "confidence": 0.92}, ...]
+    # returns: [{"label": "Rice", "confidence": 0.92}, {"label": "Dal", "confidence": 0.88}, ...]
+    # These labels are fed directly into sequence_service → Gemini categorises
+    # them as Fiber / Protein / Fat / Carb and generates the optimal eating order.
 """
 
 import io
+import json
 import logging
-from typing import List, Dict, Any
+import os
+import re
+from typing import Any, Dict, List
 
+import google.generativeai as genai
 from PIL import Image
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Lazy model loading — loaded once on first call, not at import time
-# ---------------------------------------------------------------------------
-_pipeline = None
-_MODEL_ID = "DrishtiSharma/finetuned-ViT-IndianFood-Classification-v3"
-
-
-def _load_pipeline():
-    """Load the HuggingFace image-classification pipeline (cached after first call)."""
-    global _pipeline
-    if _pipeline is None:
-        try:
-            from transformers import pipeline as hf_pipeline
-            logger.info("Loading ViT food-classification model '%s' …", _MODEL_ID)
-            _pipeline = hf_pipeline(
-                "image-classification",
-                model=_MODEL_ID,
-                top_k=5,          # return top-5 predictions
-            )
-            logger.info("ViT model loaded successfully.")
-        except Exception as exc:
-            logger.error("Failed to load ViT model: %s", exc)
-            raise RuntimeError(
-                f"Could not load food-classification model '{_MODEL_ID}'. "
-                "Ensure 'transformers' and 'torch' (or 'tensorflow') are installed."
-            ) from exc
-    return _pipeline
-
 
 # ---------------------------------------------------------------------------
-# Public API
+# Gemini Vision — primary food detector
+# ---------------------------------------------------------------------------
+
+async def _detect_with_gemini(image_bytes: bytes) -> List[Dict[str, Any]]:
+    """
+    Use Gemini 1.5 Flash to identify food items in the photo.
+    Returns a list of {label, confidence} dicts.
+    Raises RuntimeError if Gemini is unavailable or returns no usable data.
+    """
+    api_key = os.getenv("GOOGLE_AI_KEY") or os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise RuntimeError("GOOGLE_AI_KEY not set — cannot use Gemini Vision.")
+
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel("gemini-2.5-flash")
+
+    pil_image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+
+    prompt = (
+        "Look at this food photo carefully. "
+        "Identify every distinct food item visible on the plate. "
+        "For each item give a confidence score between 0.0 and 1.0. "
+        "Return ONLY a valid JSON array — no markdown, no explanation:\n"
+        '[{"label": "<food name>", "confidence": <0.0-1.0>}, ...]'
+    )
+
+    response = model.generate_content([prompt, pil_image])
+    raw = response.text.strip()
+    logger.debug("Gemini raw response: %s", raw[:300])
+
+    # Strip markdown code fences if present
+    if "```" in raw:
+        match = re.search(r'\[.*?\]', raw, re.DOTALL)
+        raw = match.group() if match else raw
+
+    detected = json.loads(raw)
+
+    if not isinstance(detected, list) or len(detected) == 0:
+        raise RuntimeError("Gemini returned empty or invalid food list.")
+
+    # Normalise labels to Title Case
+    result = [
+        {
+            "label": str(item.get("label", "Food")).strip().title(),
+            "confidence": round(float(item.get("confidence", 0.8)), 4),
+        }
+        for item in detected
+        if isinstance(item, dict) and item.get("label")
+    ]
+
+    logger.info("Gemini Vision detected: %s", [r["label"] for r in result])
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Public API — called by vision.py router
 # ---------------------------------------------------------------------------
 
 async def detect_foods(image_bytes: bytes) -> List[Dict[str, Any]]:
     """
-    Detect Indian food items in an image.
-
-    Args:
-        image_bytes: Raw bytes of the uploaded image (JPEG / PNG / WebP).
-
-    Returns:
-        List of dicts, e.g.:
-        [
-            {"label": "Idli",     "confidence": 0.92},
-            {"label": "Sambar",   "confidence": 0.74},
-        ]
-        Entries with confidence < 0.10 are filtered out.
+    Primary food detection entry point.
+    Uses Gemini Vision to identify whatever is actually in the photo.
+    Raises RuntimeError on failure (router converts to HTTP 500).
     """
-    # Decode bytes → PIL Image
-    try:
-        image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    except Exception as exc:
-        raise ValueError(f"Could not decode image: {exc}") from exc
+    return await _detect_with_gemini(image_bytes)
 
-    pipe = _load_pipeline()
-
-    # Run inference (synchronous — HF pipeline is CPU-bound)
-    try:
-        raw_results = pipe(image)
-    except Exception as exc:
-        logger.error("ViT inference error: %s", exc)
-        raise RuntimeError(f"Food detection inference failed: {exc}") from exc
-
-    # Normalise output format and filter low-confidence results
-    MIN_CONFIDENCE = 0.10
-    detected = [
-        {
-            "label": _normalise_label(r["label"]),
-            "confidence": round(float(r["score"]), 4),
-        }
-        for r in raw_results
-        if float(r["score"]) >= MIN_CONFIDENCE
-    ]
-
-    logger.info("detect_foods → %d item(s) above threshold", len(detected))
-    return detected
-
-
-def _normalise_label(raw_label: str) -> str:
-    """
-    Clean up raw model labels.
-    e.g. 'LABEL_3' or underscored names → Title Case readable names.
-    """
-    # Replace underscores / hyphens with spaces and title-case
-    cleaned = raw_label.replace("_", " ").replace("-", " ").strip().title()
-    return cleaned
-
-
-# ---------------------------------------------------------------------------
-# Fallback stub — used during development when model isn't available locally
-# ---------------------------------------------------------------------------
 
 async def detect_foods_stub(image_bytes: bytes) -> List[Dict[str, Any]]:
     """
-    Hardcoded stub for local development / unit tests.
-    Returns realistic mock detections without hitting HuggingFace.
+    Fallback — also uses Gemini Vision (same as detect_foods).
+    Called by the router when VISION_USE_STUB=1 or as a ViT fallback.
+    If Gemini is also unavailable, raises RuntimeError so the router
+    returns a clean 500 instead of silent mock data.
     """
-    _ = image_bytes  # unused intentionally
-    return [
-        {"label": "Idli",   "confidence": 0.91},
-        {"label": "Sambar", "confidence": 0.76},
-        {"label": "Chutney","confidence": 0.55},
-    ]
+    return await _detect_with_gemini(image_bytes)

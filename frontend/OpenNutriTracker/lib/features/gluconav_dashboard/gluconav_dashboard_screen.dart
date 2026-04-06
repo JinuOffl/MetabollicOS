@@ -84,7 +84,7 @@ class _DashboardViewState extends State<_DashboardView> {
         if (_lastResp != resp) {
           _lastResp = resp;
           _activeDiets = resp.dietRecommendations.take(3).toList();
-          _activeExercises = resp.exerciseRecommendations.take(2).toList();
+          _activeExercises = resp.exerciseRecommendations.take(3).toList();
 
           if (resp.currentGlucose != null) {
             _glucoseValue = resp.currentGlucose!;
@@ -176,47 +176,50 @@ class _DashboardViewState extends State<_DashboardView> {
                   color: accent,
                 ),
                 const SizedBox(height: 12),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ..._activeExercises!.map((e) => GestureDetector(
-                            onLongPress: () {
-                              final alternatives = resp.exerciseRecommendations
-                                  .where((ex) => !_activeExercises!.contains(ex))
-                                  .toList();
-                              if (alternatives.isEmpty) return;
-                              _showExerciseSwapModal(context, e, alternatives, accent, (selected) {
-                                setState(() {
-                                  final idx = _activeExercises!.indexOf(e);
-                                  if (idx != -1) _activeExercises![idx] = selected;
-                                });
-                              });
-                            },
-                            child: _ExerciseCard(
-                              exercise: e,
-                              spikeRisk: resp.spikeRisk,
-                              mode: mode,
-                              accent: accent,
-                              onDone: () {
-                                context
-                                    .read<GlucoNavDashboardBloc>()
-                                    .add(const IncrementStreak());
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(_doneCopy(mode)),
-                                    backgroundColor: accent,
-                                  ),
-                                );
-                              },
-                            ),
-                          )),
-                      _AddActivitySlotCard(accent: accent),
-                    ],
-                  ),
+
+                // Pinned: Post Meal Walk
+                _ActivityCard(
+                  exerciseId: 'post_meal_walk',
+                  name: 'Post Meal Walk',
+                  emoji: '🚶',
+                  durationMinutes: 10,
+                  glucoseBenefit: 20,
+                  timing: '20 min after meal',
+                  reason: 'A short walk right after eating flattens your glucose spike by up to 30%.',
+                  accent: accent,
+                  isPinned: true,
+                  onCompleted: () {
+                    context.read<GlucoNavDashboardBloc>().add(const IncrementStreak());
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(_doneCopy(mode)),
+                      backgroundColor: accent,
+                    ));
+                  },
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 10),
+
+                // API-driven activity cards
+                ..._activeExercises!.asMap().entries.map((entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _ActivityCard(
+                    exerciseId: entry.value.exerciseId ?? 'ex_${entry.key}',
+                    name: entry.value.name,
+                    emoji: _exerciseEmoji(entry.value.name),
+                    durationMinutes: entry.value.durationMinutes ?? 10,
+                    glucoseBenefit: (entry.value.glucoseBenefitMgDl ?? 15).toDouble(),
+                    timing: entry.value.timing ?? 'post_meal',
+                    reason: entry.value.reason ?? 'Recommended activity for your glucose profile.',
+                    accent: accent,
+                    onCompleted: () {
+                      context.read<GlucoNavDashboardBloc>().add(const IncrementStreak());
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(_doneCopy(mode)),
+                        backgroundColor: accent,
+                      ));
+                    },
+                  ),
+                )),
+                const SizedBox(height: 8),
                 // K5.2 — Developer pairing ID + LIVE/DEMO indicator
                 Center(
                   child: Column(
@@ -815,89 +818,316 @@ class _AddMealSlotCard extends StatelessWidget {
   }
 }
 
-class _ExerciseCard extends StatelessWidget {
-  final ExerciseRecommendation exercise;
-  final String spikeRisk;
-  final String mode;
+String _exerciseEmoji(String name) {
+  final n = name.toLowerCase();
+  if (n.contains('walk') || n.contains('stroll')) return '🚶';
+  if (n.contains('run') || n.contains('jog')) return '🏃';
+  if (n.contains('yoga') || n.contains('stretch')) return '🧘';
+  if (n.contains('squat') || n.contains('strength')) return '💪';
+  if (n.contains('cycle') || n.contains('bike')) return '🚴';
+  if (n.contains('swim')) return '🏊';
+  if (n.contains('dance')) return '💃';
+  return '🏋️';
+}
+
+// ── Premium Activity Card with timer + completion tracking ────────────────────
+
+class _ActivityCard extends StatefulWidget {
+  final String exerciseId;
+  final String name;
+  final String emoji;
+  final int durationMinutes;
+  final double glucoseBenefit;
+  final String timing;
+  final String reason;
   final Color accent;
-  final VoidCallback onDone;
-  const _ExerciseCard({
-    required this.exercise,
-    required this.spikeRisk,
-    required this.mode,
+  final bool isPinned;
+  final VoidCallback onCompleted;
+
+  const _ActivityCard({
+    required this.exerciseId,
+    required this.name,
+    required this.emoji,
+    required this.durationMinutes,
+    required this.glucoseBenefit,
+    required this.timing,
+    required this.reason,
     required this.accent,
-    required this.onDone,
+    required this.onCompleted,
+    this.isPinned = false,
   });
 
   @override
+  State<_ActivityCard> createState() => _ActivityCardState();
+}
+
+class _ActivityCardState extends State<_ActivityCard> with SingleTickerProviderStateMixin {
+  bool _completed = false;
+  bool _inProgress = false;
+  int _secondsRemaining = 0;
+  late AnimationController _checkAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _secondsRemaining = widget.durationMinutes * 60;
+    _checkAnim = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
+  }
+
+  @override
+  void dispose() {
+    _checkAnim.dispose();
+    super.dispose();
+  }
+
+  void _startTimer() {
+    if (_inProgress || _completed) return;
+    setState(() => _inProgress = true);
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return false;
+      setState(() => _secondsRemaining--);
+      if (_secondsRemaining <= 0) {
+        setState(() {
+          _inProgress = false;
+          _secondsRemaining = 0;
+        });
+        return false;
+      }
+      return _inProgress;
+    });
+  }
+
+  void _markComplete() {
+    setState(() {
+      _completed = true;
+      _inProgress = false;
+    });
+    _checkAnim.forward();
+    widget.onCompleted();
+  }
+
+  String get _timerDisplay {
+    final m = _secondsRemaining ~/ 60;
+    final s = _secondsRemaining % 60;
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
+  double get _progress {
+    final total = widget.durationMinutes * 60;
+    if (total == 0) return 1.0;
+    return 1.0 - (_secondsRemaining / total);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final urgencyLabel = _urgencyLabel(spikeRisk, mode);
-    return Container(
-      width: 155,
-      margin: const EdgeInsets.only(right: 12),
+    final completedColor = const Color(0xFF10B981);
+    final cardBorder = _completed
+        ? completedColor
+        : _inProgress
+            ? widget.accent
+            : widget.accent.withOpacity(0.3);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 350),
+      width: double.infinity,
       decoration: BoxDecoration(
-        color: GlucoNavColors.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accent.withOpacity(0.3)),
+        color: _completed
+            ? completedColor.withOpacity(0.06)
+            : GlucoNavColors.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: cardBorder, width: _inProgress ? 1.5 : 1.0),
+        boxShadow: [
+          BoxShadow(
+            color: cardBorder.withOpacity(0.1),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.directions_walk, color: accent, size: 24),
+            // Header row
+            Row(
+              children: [
+                Text(widget.emoji, style: const TextStyle(fontSize: 28)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              widget.name,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: _completed
+                                    ? completedColor
+                                    : GlucoNavColors.textPrimary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (widget.isPinned)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: widget.accent.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'Recommended',
+                                style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: widget.accent),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${widget.durationMinutes} min  •  ${widget.timing.replaceAll('_', ' ')}',
+                        style: const TextStyle(fontSize: 11, color: GlucoNavColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+                // Glucose benefit badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: GlucoNavColors.spikeLow.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '−${widget.glucoseBenefit.round()} mg/dL',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: GlucoNavColors.spikeLow,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
             const SizedBox(height: 10),
-            Text(exercise.name, maxLines: 2, overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: GlucoNavColors.textPrimary)),
-            const SizedBox(height: 6),
-            if (exercise.durationMinutes != null || exercise.glucoseBenefitMgDl != null)
-              Wrap(
-                spacing: 4,
+
+            // Reason text
+            Text(
+              widget.reason,
+              style: const TextStyle(fontSize: 11, color: GlucoNavColors.textSecondary),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+
+            const SizedBox(height: 14),
+
+            // Timer + progress bar (only when in progress)
+            if (_inProgress) ...[
+              Row(
                 children: [
-                  if (exercise.durationMinutes != null)
-                    Text('${exercise.durationMinutes}m', style: const TextStyle(fontSize: 11, color: GlucoNavColors.textSecondary)),
-                  if (exercise.glucoseBenefitMgDl != null)
-                    Text('−${exercise.glucoseBenefitMgDl!.round()}', style: const TextStyle(fontSize: 11, color: GlucoNavColors.spikeLow, fontWeight: FontWeight.bold)),
+                  Text(
+                    _timerDisplay,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: widget.accent,
+                      fontFeatures: const [],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('remaining', style: TextStyle(fontSize: 11, color: GlucoNavColors.textSecondary)),
                 ],
               ),
-            if (urgencyLabel != null) ...[
               const SizedBox(height: 6),
-              Text(urgencyLabel, style: const TextStyle(fontSize: 10, color: GlucoNavColors.spikeHigh, fontWeight: FontWeight.w500)),
-            ],
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 32,
-              child: ElevatedButton(
-                onPressed: onDone,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: accent,
-                  elevation: 0,
-                  padding: EdgeInsets.zero,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: _progress,
+                  minHeight: 6,
+                  color: widget.accent,
+                  backgroundColor: widget.accent.withOpacity(0.12),
                 ),
-                child: Text(_doneBtnLabel(mode), style: const TextStyle(fontSize: 11)),
               ),
-            ),
+              const SizedBox(height: 14),
+            ],
+
+            // Action buttons
+            if (!_completed)
+              Row(
+                children: [
+                  if (!_inProgress)
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _startTimer,
+                        icon: Icon(Icons.play_arrow, color: widget.accent, size: 16),
+                        label: Text('Start', style: TextStyle(color: widget.accent, fontSize: 12)),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: widget.accent.withOpacity(0.5)),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    )
+                  else
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => setState(() {
+                          _inProgress = false;
+                          _secondsRemaining = widget.durationMinutes * 60;
+                        }),
+                        icon: const Icon(Icons.stop, color: GlucoNavColors.textSecondary, size: 16),
+                        label: const Text('Stop', style: TextStyle(color: GlucoNavColors.textSecondary, fontSize: 12)),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: GlucoNavColors.textSecondary, width: 0.5),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      onPressed: _markComplete,
+                      icon: const Icon(Icons.check_circle_outline, color: Colors.white, size: 16),
+                      label: const Text('Mark Complete', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: completedColor,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            else
+              // Completed state
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle, color: completedColor, size: 22),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Completed! 🔥 Glucose spike flattened',
+                    style: TextStyle(color: completedColor, fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ],
+              ),
           ],
         ),
       ),
     );
   }
-
-  String? _urgencyLabel(String risk, String mode) {
-    if (mode == 'supportive') return null;
-    if (risk == 'high') return '⚡ Spike risk';
-    if (risk == 'medium') return 'Moderate risk';
-    return null;
-  }
-
-  String _doneBtnLabel(String mode) {
-    if (mode == 'supportive') return 'Done 💚';
-    if (mode == 'balanced') return 'Complete';
-    return 'Done! 🔥';
-  }
 }
+
 
 class _AddActivitySlotCard extends StatelessWidget {
   final Color accent;
@@ -1093,7 +1323,7 @@ void _showLogModal(BuildContext context, String type, Color accent) {
 /// User enters: IP address, Port (default 8000), User ID
 /// On save, updates GlucoNavApiService base URL and userId in SharedPreferences.
 void _showCGMConnectDialog(BuildContext context) {
-  final ipCtrl = TextEditingController(text: 'localhost');
+  final ipCtrl = TextEditingController(text: '10.240.206.169');
   final portCtrl = TextEditingController(text: '8000');
   final uIdCtrl = TextEditingController(text: GlucoNavApiService.userId);
 
@@ -1111,7 +1341,7 @@ void _showCGMConnectDialog(BuildContext context) {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Text(
-            'Get these values from the CGM Simulator page (http://localhost:5000).',
+            'Get these values from the CGM Simulator page (http://10.240.206.169:5000).',
             style: TextStyle(fontSize: 12, color: GlucoNavColors.textSecondary),
           ),
           const SizedBox(height: 16),

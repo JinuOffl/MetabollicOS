@@ -122,7 +122,6 @@ class GlucoNavDashboardBloc
       response = await _api.getRecommendations(
         GlucoNavApiService.userId,
         sleepScore: _lastSleepScore,
-        currentGlucose: _lastKnownGlucose,
       );
       isLive = true;
     } catch (_) {
@@ -151,7 +150,8 @@ class GlucoNavDashboardBloc
       response = await _api.getRecommendations(
         GlucoNavApiService.userId,
         sleepScore: _lastSleepScore,
-        currentGlucose: _lastKnownGlucose,
+        // Don't pass currentGlucose here — we want the server to pull the 
+        // LATEST real-time value from the DB (K5.2 logic).
       );
       isLive = true;
     } catch (_) {

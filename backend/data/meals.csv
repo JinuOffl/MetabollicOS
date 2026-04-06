@@ -1,66 +1,66 @@
 id,name,name_local,cuisine,meal_type,glycemic_index,glycemic_load,protein_pct,fiber_g,carb_pct,fat_pct,calories_per_100g,prep_time,is_vegetarian,tags,carbs_g,image_url
-meal001,Idli with Sambar,இட்லி சாம்பார்,south_indian,breakfast,35,low,12.0,3.5,75.0,13.0,120.0,moderate,True,"[""low_gi"",""diabetic_friendly"",""south_indian_staple""]",56,https://picsum.photos/seed/67/200/200
-meal002,Plain Dosa,தோசை,south_indian,breakfast,55,medium,8.0,1.5,72.0,20.0,165.0,moderate,True,"[""medium_gi"",""south_indian_staple""]",74,https://picsum.photos/seed/437/200/200
-meal003,Masala Dosa,மசாலா தோசை,south_indian,breakfast,58,medium,7.0,2.5,65.0,28.0,210.0,moderate,True,"[""medium_gi"",""south_indian_staple""]",85,https://picsum.photos/seed/792/200/200
-meal004,Oats Upma,ஓட்ஸ் உப்புமா,south_indian,breakfast,42,low,15.0,8.0,60.0,25.0,180.0,quick,True,"[""low_gi"",""high_fiber"",""diabetic_friendly""]",68,https://picsum.photos/seed/925/200/200
-meal005,Poha (Flattened Rice),அவல்,west_indian,breakfast,70,medium,8.0,2.0,78.0,14.0,110.0,quick,True,"[""medium_gi""]",54,https://picsum.photos/seed/286/200/200
-meal006,Ragi Mudde,ராகி முத்தே,south_indian,lunch,38,low,10.0,11.0,85.0,5.0,140.0,long,True,"[""low_gi"",""high_fiber"",""diabetic_friendly""]",74,https://picsum.photos/seed/480/200/200
-meal007,Besan Chilla,बेसन चीला,north_indian,breakfast,35,low,22.0,5.0,55.0,23.0,160.0,quick,True,"[""low_gi"",""high_protein"",""north_indian_staple""]",55,https://picsum.photos/seed/777/200/200
-meal008,Moong Dal Cheela,मूंग दाल चीला,north_indian,breakfast,32,low,24.0,6.5,58.0,18.0,150.0,moderate,True,"[""low_gi"",""high_protein"",""diabetic_friendly""]",54,https://picsum.photos/seed/725/200/200
-meal009,White Rice + Dal,அரிசி பருப்பு சாதம்,south_indian,lunch,73,high,12.0,2.0,80.0,8.0,130.0,moderate,True,"[""high_gi"",""avoid_for_t2""]",65,https://picsum.photos/seed/778/200/200
-meal010,Brown Rice + Dal,கைக்குத்தல் அரிசி பருப்பு,south_indian,lunch,55,medium,14.0,4.5,75.0,11.0,115.0,moderate,True,"[""medium_gi"",""high_fiber""]",54,https://picsum.photos/seed/864/200/200
-meal011,Dal Khichdi,கிச்சடி,north_indian,dinner,45,low,15.0,4.0,70.0,15.0,120.0,moderate,True,"[""low_gi"",""diabetic_friendly""]",52,https://picsum.photos/seed/975/200/200
-meal012,Rajma Chawal,राजमा चावल,north_indian,lunch,28,low,18.0,7.0,72.0,10.0,140.0,long,True,"[""low_gi"",""high_protein"",""north_indian_staple""]",63,https://picsum.photos/seed/425/200/200
-meal013,Chole Bhature,छोले भटूरे,north_indian,lunch,82,high,10.0,4.0,50.0,40.0,320.0,long,True,"[""high_gi"",""avoid_for_t2"",""high_fat""]",100,https://picsum.photos/seed/41/200/200
-meal014,Roti (1 Wheat),சப்பாத்தி,north_indian,dinner,62,medium,12.0,3.5,78.0,10.0,260.0,quick,True,"[""medium_gi"",""north_indian_staple""]",127,https://picsum.photos/seed/949/200/200
-meal015,Jowar Roti,சோள ரொட்டி,west_indian,dinner,52,low,14.0,9.0,80.0,6.0,250.0,moderate,True,"[""low_gi"",""high_fiber"",""diabetic_friendly""]",125,https://picsum.photos/seed/976/200/200
-meal016,Bajra Roti,கம்பு ரொட்டி,west_indian,dinner,54,low,13.0,10.0,77.0,10.0,255.0,moderate,True,"[""low_gi"",""high_fiber"",""diabetic_friendly""]",123,https://picsum.photos/seed/216/200/200
-meal017,Paneer Bhurji + Roti,பனீர் புர்ஜி,north_indian,dinner,45,low,25.0,4.0,45.0,30.0,210.0,quick,True,"[""low_gi"",""high_protein""]",59,https://picsum.photos/seed/567/200/200
-meal018,Dal Tadka,பருப்பு தட்கா,north_indian,lunch,25,low,22.0,6.0,60.0,18.0,115.0,moderate,True,"[""low_gi"",""high_protein"",""north_indian_staple""]",43,https://picsum.photos/seed/344/200/200
-meal019,Palak Paneer,பாலக் பனீர்,north_indian,dinner,15,low,28.0,4.0,15.0,57.0,140.0,moderate,True,"[""low_gi"",""low_carb"",""high_protein""]",13,https://picsum.photos/seed/346/200/200
-meal020,Sambar,சாம்பார்,south_indian,lunch,30,low,18.0,5.0,65.0,17.0,95.0,moderate,True,"[""low_gi"",""south_indian_staple""]",39,https://picsum.photos/seed/331/200/200
-meal021,Curd Rice,தயிர் சாதம்,south_indian,lunch,38,low,10.0,1.0,70.0,20.0,110.0,quick,True,"[""low_gi"",""probiotic"",""south_indian_staple""]",48,https://picsum.photos/seed/27/200/200
-meal022,Sprouts Salad,பயறு சாலட்,south_indian,snack,28,low,30.0,9.0,55.0,15.0,130.0,quick,True,"[""low_gi"",""high_protein"",""high_fiber"",""snack_friendly""]",21,https://picsum.photos/seed/637/200/200
-meal023,Mixed Vegetable Curry,காய் கறி கூட்டு,south_indian,dinner,35,low,12.0,6.0,68.0,20.0,85.0,moderate,True,"[""low_gi"",""high_fiber"",""diabetic_friendly""]",36,https://picsum.photos/seed/575/200/200
-meal024,Fish Curry + Rice,மீன் குழம்பு சாதம்,south_indian,lunch,60,medium,25.0,1.5,60.0,15.0,160.0,long,False,"[""medium_gi"",""high_protein""]",60,https://picsum.photos/seed/375/200/200
-meal025,Chicken Curry + Roti,சிக்கன் குழம்பு,north_indian,dinner,40,low,35.0,3.0,40.0,25.0,185.0,long,False,"[""low_gi"",""high_protein""]",46,https://picsum.photos/seed/967/200/200
-meal026,Egg Bhurji,முட்டை புர்ஜி,north_indian,snack,0,low,45.0,0.0,5.0,50.0,170.0,quick,False,"[""low_gi"",""zero_carb"",""high_protein"",""snack_friendly""]",3,https://picsum.photos/seed/717/200/200
-meal027,Grilled Paneer,கிரில் பனீர்,north_indian,snack,0,low,30.0,0.0,5.0,65.0,265.0,quick,True,"[""low_gi"",""zero_carb"",""high_protein"",""snack_friendly""]",4,https://picsum.photos/seed/761/200/200
-meal028,Roasted Makhana,வறுத்த தாமரை விதை,north_indian,snack,14,low,12.0,14.0,70.0,4.0,350.0,quick,True,"[""low_gi"",""snack_friendly"",""diabetic_friendly""]",73,https://picsum.photos/seed/260/200/200
-meal029,Fruit Chaat (Apple/Pear),பழ சாட்,north_indian,snack,38,low,5.0,15.0,85.0,10.0,60.0,quick,True,"[""low_gi"",""high_fiber"",""snack_friendly""]",15,https://picsum.photos/seed/752/200/200
-meal030,Masala Buttermilk,மோர்,south_indian,snack,25,low,35.0,0.0,40.0,25.0,35.0,quick,True,"[""low_gi"",""probiotic"",""snack_friendly""]",4,https://picsum.photos/seed/109/200/200
-meal031,Pesarattu (Moong Dosa),பெசரட்டு,south_indian,breakfast,45,low,20.0,7.0,65.0,15.0,155.0,moderate,True,"[""low_gi"",""high_protein"",""south_indian_staple""]",63,https://picsum.photos/seed/508/200/200
-meal032,Rava Idli,ரவா இட்லி,south_indian,breakfast,60,medium,10.0,2.0,75.0,15.0,145.0,moderate,True,"[""medium_gi""]",68,https://picsum.photos/seed/103/200/200
-meal033,Uttapam,ஊத்தப்பம்,south_indian,breakfast,60,medium,9.0,3.0,70.0,21.0,180.0,moderate,True,"[""medium_gi""]",79,https://picsum.photos/seed/973/200/200
-meal034,Medu Vada (1 pc),மெது வடை,south_indian,snack,45,low,15.0,4.0,50.0,35.0,290.0,moderate,True,"[""low_gi"",""high_fat""]",44,https://picsum.photos/seed/780/200/200
-meal035,Coconut Chutney,தேங்காய் சட்னி,south_indian,snack,10,low,5.0,12.0,15.0,68.0,220.0,quick,True,"[""low_gi"",""high_fat""]",10,https://picsum.photos/seed/211/200/200
-meal036,Aloo Paratha,ஆலு பரோட்டா,north_indian,breakfast,65,medium,10.0,4.0,60.0,30.0,240.0,moderate,True,"[""medium_gi""]",90,https://picsum.photos/seed/752/200/200
-meal037,Methi Thepla,மெதி தேப்லா,west_indian,breakfast,48,low,14.0,8.0,65.0,21.0,190.0,moderate,True,"[""low_gi"",""high_fiber""]",77,https://picsum.photos/seed/500/200/200
-meal038,Dal Makhani,தால் மக்கானி,north_indian,dinner,45,low,16.0,7.0,55.0,29.0,160.0,long,True,"[""low_gi"",""high_protein"",""high_fat""]",55,https://picsum.photos/seed/695/200/200
-meal039,Kadhi Chawal,கடி சாவல்,north_indian,lunch,55,medium,12.0,2.0,75.0,13.0,125.0,moderate,True,"[""medium_gi"",""probiotic""]",59,https://picsum.photos/seed/441/200/200
-meal040,Saag (Spinach),கீரை,north_indian,dinner,15,low,25.0,12.0,30.0,45.0,90.0,moderate,True,"[""low_gi"",""high_fiber"",""diabetic_friendly""]",17,https://picsum.photos/seed/977/200/200
-meal041,Dhokla,டோக்லா,west_indian,breakfast,35,low,18.0,3.0,65.0,17.0,160.0,moderate,True,"[""low_gi"",""probiotic""]",65,https://picsum.photos/seed/398/200/200
-meal042,Dal Baati,தால் பாட்டி,west_indian,lunch,65,medium,14.0,6.0,55.0,31.0,350.0,long,True,"[""medium_gi"",""high_fat""]",120,https://picsum.photos/seed/11/200/200
-meal043,Puran Poli,பூரன் போளி,west_indian,snack,75,high,8.0,3.0,75.0,17.0,280.0,long,True,"[""high_gi"",""avoid_for_t2""]",63,https://picsum.photos/seed/131/200/200
-meal044,Khandvi,காண்ட்வி,west_indian,snack,40,low,15.0,3.0,55.0,30.0,180.0,long,True,"[""low_gi"",""snack_friendly""]",30,https://picsum.photos/seed/62/200/200
-meal045,Roasted Chana,வறுத்த கடலை,north_indian,snack,28,low,25.0,18.0,60.0,15.0,360.0,quick,True,"[""low_gi"",""high_protein"",""snack_friendly""]",65,https://picsum.photos/seed/755/200/200
-meal046,Banana (1 Medium),வாழைப்பழம்,south_indian,snack,51,low,4.0,10.0,90.0,1.0,90.0,quick,True,"[""low_gi"",""snack_friendly""]",24,https://picsum.photos/seed/494/200/200
-meal047,Boiled Egg (2),அவித்த முட்டை,south_indian,snack,0,low,45.0,0.0,5.0,50.0,155.0,quick,False,"[""low_gi"",""zero_carb"",""high_protein"",""snack_friendly""]",2,https://picsum.photos/seed/382/200/200
-meal048,Chaas (Buttermilk),மோர்,north_indian,snack,25,low,35.0,0.0,40.0,25.0,30.0,quick,True,"[""low_gi"",""probiotic"",""snack_friendly""]",4,https://picsum.photos/seed/740/200/200
-meal049,Green Tea,கிரீன் டீ,north_indian,snack,0,low,0.0,0.0,0.0,0.0,2.0,quick,True,"[""low_gi"",""zero_carb"",""snack_friendly""]",0,https://picsum.photos/seed/646/200/200
-meal050,Chicken Biryani,சிக்கன் பிரியாணி,south_indian,lunch,65,medium,20.0,2.0,55.0,25.0,190.0,long,False,"[""medium_gi"",""high_protein""]",65,https://picsum.photos/seed/476/200/200
-meal051,Mutton Curry,ஆட்டிறைச்சி குழம்பு,south_indian,dinner,30,low,40.0,1.0,10.0,49.0,220.0,long,False,"[""low_gi"",""high_protein"",""high_fat""]",14,https://picsum.photos/seed/73/200/200
-meal052,Tandoori Chicken,தந்தூரி சிக்கன்,north_indian,dinner,0,low,65.0,0.0,5.0,30.0,150.0,long,False,"[""low_gi"",""zero_carb"",""high_protein""]",5,https://picsum.photos/seed/660/200/200
-meal053,Fish Fry,மீன் வறுவல்,south_indian,snack,0,low,50.0,0.0,5.0,45.0,240.0,moderate,False,"[""low_gi"",""zero_carb"",""high_protein""]",4,https://picsum.photos/seed/565/200/200
-meal054,Prawn Thokku,இறால் தொக்கு,south_indian,dinner,20,low,55.0,2.0,15.0,28.0,145.0,moderate,False,"[""low_gi"",""high_protein""]",14,https://picsum.photos/seed/233/200/200
-meal055,Egg Curry,முட்டை குழம்பு,south_indian,dinner,20,low,25.0,1.0,25.0,49.0,140.0,moderate,False,"[""low_gi"",""high_protein""]",22,https://picsum.photos/seed/194/200/200
-meal056,Keema Paratha,கீமா பரோட்டா,north_indian,breakfast,55,medium,22.0,4.0,50.0,28.0,260.0,long,False,"[""medium_gi"",""high_protein""]",81,https://picsum.photos/seed/13/200/200
-meal057,Butter Chicken,பட்டர் சிக்கன்,north_indian,dinner,35,low,25.0,1.0,15.0,59.0,240.0,long,False,"[""low_gi"",""high_protein"",""high_fat""]",22,https://picsum.photos/seed/632/200/200
-meal058,Fish Tikka,மீன் டிக்கா,north_indian,snack,0,low,60.0,0.0,5.0,35.0,160.0,moderate,False,"[""low_gi"",""zero_carb"",""high_protein"",""snack_friendly""]",2,https://picsum.photos/seed/65/200/200
-meal059,Vegetable Stew,காய் கறி ஸ்டூ,south_indian,dinner,40,low,10.0,7.0,50.0,40.0,110.0,moderate,True,"[""low_gi"",""high_fiber""]",34,https://picsum.photos/seed/459/200/200
-meal060,Malabar Parotta,பரோட்டா,south_indian,dinner,78,high,8.0,1.5,70.0,20.5,320.0,long,True,"[""high_gi"",""avoid_for_t2""]",140,https://picsum.photos/seed/467/200/200
-meal061,Misal Pav,மிசல் பாவ்,west_indian,breakfast,55,medium,18.0,8.0,60.0,22.0,210.0,long,True,"[""medium_gi"",""high_protein""]",79,https://picsum.photos/seed/564/200/200
-meal062,Rava Dosa,ரவா தோசை,south_indian,breakfast,62,medium,9.0,2.0,72.0,17.0,175.0,moderate,True,"[""medium_gi""]",79,https://picsum.photos/seed/145/200/200
-meal063,Cabbage Poriyal,முட்டைக்கோஸ் பொரியல்,south_indian,lunch,15,low,15.0,9.0,45.0,40.0,75.0,quick,True,"[""low_gi"",""high_fiber"",""diabetic_friendly""]",21,https://picsum.photos/seed/152/200/200
-meal064,Sabudana Khichdi,சபுதானா கிச்சடி,west_indian,breakfast,75,high,3.0,1.0,85.0,12.0,210.0,moderate,True,"[""high_gi"",""avoid_for_t2""]",112,https://picsum.photos/seed/940/200/200
-meal065,Mutton Biryani,மட்டன் பிரியாணி,north_indian,lunch,62,medium,22.0,2.0,50.0,28.0,230.0,long,False,"[""medium_gi"",""high_protein""]",72,https://picsum.photos/seed/742/200/200
+meal001,Idli with Sambar,இட்லி சாம்பார்,south_indian,breakfast,35,low,12.0,3.5,75.0,13.0,120.0,moderate,True,"[""low_gi"",""diabetic_friendly"",""south_indian_staple""]",56,https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=400&q=80
+meal002,Plain Dosa,தோசை,south_indian,breakfast,55,medium,8.0,1.5,72.0,20.0,165.0,moderate,True,"[""medium_gi"",""south_indian_staple""]",74,https://images.unsplash.com/photo-1630383249896-424e482df921?w=400&q=80
+meal003,Masala Dosa,மசாலா தோசை,south_indian,breakfast,58,medium,7.0,2.5,65.0,28.0,210.0,moderate,True,"[""medium_gi"",""south_indian_staple""]",85,https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=400&q=80
+meal004,Oats Upma,ஓட்ஸ் உப்புமா,south_indian,breakfast,42,low,15.0,8.0,60.0,25.0,180.0,quick,True,"[""low_gi"",""high_fiber"",""diabetic_friendly""]",68,https://images.unsplash.com/photo-1495214783159-3503fd1b572d?w=400&q=80
+meal005,Poha (Flattened Rice),அவல்,west_indian,breakfast,70,medium,8.0,2.0,78.0,14.0,110.0,quick,True,"[""medium_gi""]",54,https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=400&q=80
+meal006,Ragi Mudde,ராகி முத்தே,south_indian,lunch,38,low,10.0,11.0,85.0,5.0,140.0,long,True,"[""low_gi"",""high_fiber"",""diabetic_friendly""]",74,https://images.unsplash.com/photo-1596797038530-2c107229654b?w=400&q=80
+meal007,Besan Chilla,बेसन चीला,north_indian,breakfast,35,low,22.0,5.0,55.0,23.0,160.0,quick,True,"[""low_gi"",""high_protein"",""north_indian_staple""]",55,https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&q=80
+meal008,Moong Dal Cheela,मूंग दाल चीला,north_indian,breakfast,32,low,24.0,6.5,58.0,18.0,150.0,moderate,True,"[""low_gi"",""high_protein"",""diabetic_friendly""]",54,https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&q=80
+meal009,White Rice + Dal,அரிசி பருப்பு சாதம்,south_indian,lunch,73,high,12.0,2.0,80.0,8.0,130.0,moderate,True,"[""high_gi"",""avoid_for_t2""]",65,https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&q=80
+meal010,Brown Rice + Dal,கைக்குத்தல் அரிசி பருப்பு,south_indian,lunch,55,medium,14.0,4.5,75.0,11.0,115.0,moderate,True,"[""medium_gi"",""high_fiber""]",54,https://images.unsplash.com/photo-1516714435131-44d6b64dc6a2?w=400&q=80
+meal011,Dal Khichdi,கிச்சடி,north_indian,dinner,45,low,15.0,4.0,70.0,15.0,120.0,moderate,True,"[""low_gi"",""diabetic_friendly""]",52,https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&q=80
+meal012,Rajma Chawal,राजमा चावल,north_indian,lunch,28,low,18.0,7.0,72.0,10.0,140.0,long,True,"[""low_gi"",""high_protein"",""north_indian_staple""]",63,https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400&q=80
+meal013,Chole Bhature,छोले भटूरे,north_indian,lunch,82,high,10.0,4.0,50.0,40.0,320.0,long,True,"[""high_gi"",""avoid_for_t2"",""high_fat""]",100,https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=400&q=80
+meal014,Roti (1 Wheat),சப்பாத்தி,north_indian,dinner,62,medium,12.0,3.5,78.0,10.0,260.0,quick,True,"[""medium_gi"",""north_indian_staple""]",127,https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&q=80
+meal015,Jowar Roti,சோள ரொட்டி,west_indian,dinner,52,low,14.0,9.0,80.0,6.0,250.0,moderate,True,"[""low_gi"",""high_fiber"",""diabetic_friendly""]",125,https://images.unsplash.com/photo-1596797038530-2c107229654b?w=400&q=80
+meal016,Bajra Roti,கம்பு ரொட்டி,west_indian,dinner,54,low,13.0,10.0,77.0,10.0,255.0,moderate,True,"[""low_gi"",""high_fiber"",""diabetic_friendly""]",123,https://images.unsplash.com/photo-1596797038530-2c107229654b?w=400&q=80
+meal017,Paneer Bhurji + Roti,பனீர் புர்ஜி,north_indian,dinner,45,low,25.0,4.0,45.0,30.0,210.0,quick,True,"[""low_gi"",""high_protein""]",59,https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=400&q=80
+meal018,Dal Tadka,பருப்பு தட்கா,north_indian,lunch,25,low,22.0,6.0,60.0,18.0,115.0,moderate,True,"[""low_gi"",""high_protein"",""north_indian_staple""]",43,https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&q=80
+meal019,Palak Paneer,பாலக் பனீர்,north_indian,dinner,15,low,28.0,4.0,15.0,57.0,140.0,moderate,True,"[""low_gi"",""low_carb"",""high_protein""]",13,https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=400&q=80
+meal020,Sambar,சாம்பார்,south_indian,lunch,30,low,18.0,5.0,65.0,17.0,95.0,moderate,True,"[""low_gi"",""south_indian_staple""]",39,https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=400&q=80
+meal021,Curd Rice,தயிர் சாதம்,south_indian,lunch,38,low,10.0,1.0,70.0,20.0,110.0,quick,True,"[""low_gi"",""probiotic"",""south_indian_staple""]",48,https://images.unsplash.com/photo-1516714435131-44d6b64dc6a2?w=400&q=80
+meal022,Sprouts Salad,பயறு சாலட்,south_indian,snack,28,low,30.0,9.0,55.0,15.0,130.0,quick,True,"[""low_gi"",""high_protein"",""high_fiber"",""snack_friendly""]",21,https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&q=80
+meal023,Mixed Vegetable Curry,காய் கறி கூட்டு,south_indian,dinner,35,low,12.0,6.0,68.0,20.0,85.0,moderate,True,"[""low_gi"",""high_fiber"",""diabetic_friendly""]",36,https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400&q=80
+meal024,Fish Curry + Rice,மீன் குழம்பு சாதம்,south_indian,lunch,60,medium,25.0,1.5,60.0,15.0,160.0,long,False,"[""medium_gi"",""high_protein""]",60,https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&q=80
+meal025,Chicken Curry + Roti,சிக்கன் குழம்பு,north_indian,dinner,40,low,35.0,3.0,40.0,25.0,185.0,long,False,"[""low_gi"",""high_protein""]",46,https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&q=80
+meal026,Egg Bhurji,முட்டை புர்ஜி,north_indian,snack,0,low,45.0,0.0,5.0,50.0,170.0,quick,False,"[""low_gi"",""zero_carb"",""high_protein"",""snack_friendly""]",3,https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&q=80
+meal027,Grilled Paneer,கிரில் பனீர்,north_indian,snack,0,low,30.0,0.0,5.0,65.0,265.0,quick,True,"[""low_gi"",""zero_carb"",""high_protein"",""snack_friendly""]",4,https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=400&q=80
+meal028,Roasted Makhana,வறுத்த தாமரை விதை,north_indian,snack,14,low,12.0,14.0,70.0,4.0,350.0,quick,True,"[""low_gi"",""snack_friendly"",""diabetic_friendly""]",73,https://images.unsplash.com/photo-1599490659213-e2b9527bd087?w=400&q=80
+meal029,Fruit Chaat (Apple/Pear),பழ சாட்,north_indian,snack,38,low,5.0,15.0,85.0,10.0,60.0,quick,True,"[""low_gi"",""high_fiber"",""snack_friendly""]",15,https://images.unsplash.com/photo-1490474418585-ba9bad8fd0ea?w=400&q=80
+meal030,Masala Buttermilk,மோர்,south_indian,snack,25,low,35.0,0.0,40.0,25.0,35.0,quick,True,"[""low_gi"",""probiotic"",""snack_friendly""]",4,https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=400&q=80
+meal031,Pesarattu (Moong Dosa),பெசரட்டு,south_indian,breakfast,45,low,20.0,7.0,65.0,15.0,155.0,moderate,True,"[""low_gi"",""high_protein"",""south_indian_staple""]",63,https://images.unsplash.com/photo-1630383249896-424e482df921?w=400&q=80
+meal032,Rava Idli,ரவா இட்லி,south_indian,breakfast,60,medium,10.0,2.0,75.0,15.0,145.0,moderate,True,"[""medium_gi""]",68,https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=400&q=80
+meal033,Uttapam,ஊத்தப்பம்,south_indian,breakfast,60,medium,9.0,3.0,70.0,21.0,180.0,moderate,True,"[""medium_gi""]",79,https://images.unsplash.com/photo-1630383249896-424e482df921?w=400&q=80
+meal034,Medu Vada (1 pc),மெது வடை,south_indian,snack,45,low,15.0,4.0,50.0,35.0,290.0,moderate,True,"[""low_gi"",""high_fat""]",44,https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=400&q=80
+meal035,Coconut Chutney,தேங்காய் சட்னி,south_indian,snack,10,low,5.0,12.0,15.0,68.0,220.0,quick,True,"[""low_gi"",""high_fat""]",10,https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=400&q=80
+meal036,Aloo Paratha,ஆலு பரோட்டா,north_indian,breakfast,65,medium,10.0,4.0,60.0,30.0,240.0,moderate,True,"[""medium_gi""]",90,https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&q=80
+meal037,Methi Thepla,மெதி தேப்லா,west_indian,breakfast,48,low,14.0,8.0,65.0,21.0,190.0,moderate,True,"[""low_gi"",""high_fiber""]",77,https://images.unsplash.com/photo-1596797038530-2c107229654b?w=400&q=80
+meal038,Dal Makhani,தால் மக்கானி,north_indian,dinner,45,low,16.0,7.0,55.0,29.0,160.0,long,True,"[""low_gi"",""high_protein"",""high_fat""]",55,https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&q=80
+meal039,Kadhi Chawal,கடி சாவல்,north_indian,lunch,55,medium,12.0,2.0,75.0,13.0,125.0,moderate,True,"[""medium_gi"",""probiotic""]",59,https://images.unsplash.com/photo-1516714435131-44d6b64dc6a2?w=400&q=80
+meal040,Saag (Spinach),கீரை,north_indian,dinner,15,low,25.0,12.0,30.0,45.0,90.0,moderate,True,"[""low_gi"",""high_fiber"",""diabetic_friendly""]",17,https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400&q=80
+meal041,Dhokla,டோக்லா,west_indian,breakfast,35,low,18.0,3.0,65.0,17.0,160.0,moderate,True,"[""low_gi"",""probiotic""]",65,https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=400&q=80
+meal042,Dal Baati,தால் பாட்டி,west_indian,lunch,65,medium,14.0,6.0,55.0,31.0,350.0,long,True,"[""medium_gi"",""high_fat""]",120,https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&q=80
+meal043,Puran Poli,பூரன் போளி,west_indian,snack,75,high,8.0,3.0,75.0,17.0,280.0,long,True,"[""high_gi"",""avoid_for_t2""]",63,https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&q=80
+meal044,Khandvi,காண்ட்வி,west_indian,snack,40,low,15.0,3.0,55.0,30.0,180.0,long,True,"[""low_gi"",""snack_friendly""]",30,https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=400&q=80
+meal045,Roasted Chana,வறுத்த கடலை,north_indian,snack,28,low,25.0,18.0,60.0,15.0,360.0,quick,True,"[""low_gi"",""high_protein"",""snack_friendly""]",65,https://images.unsplash.com/photo-1599490659213-e2b9527bd087?w=400&q=80
+meal046,Banana (1 Medium),வாழைப்பழம்,south_indian,snack,51,low,4.0,10.0,90.0,1.0,90.0,quick,True,"[""low_gi"",""snack_friendly""]",24,https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400&q=80
+meal047,Boiled Egg (2),அவித்த முட்டை,south_indian,snack,0,low,45.0,0.0,5.0,50.0,155.0,quick,False,"[""low_gi"",""zero_carb"",""high_protein"",""snack_friendly""]",2,https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&q=80
+meal048,Chaas (Buttermilk),மோர்,north_indian,snack,25,low,35.0,0.0,40.0,25.0,30.0,quick,True,"[""low_gi"",""probiotic"",""snack_friendly""]",4,https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=400&q=80
+meal049,Green Tea,கிரீன் டீ,north_indian,snack,0,low,0.0,0.0,0.0,0.0,2.0,quick,True,"[""low_gi"",""zero_carb"",""snack_friendly""]",0,https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400&q=80
+meal050,Chicken Biryani,சிக்கன் பிரியாணி,south_indian,lunch,65,medium,20.0,2.0,55.0,25.0,190.0,long,False,"[""medium_gi"",""high_protein""]",65,https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&q=80
+meal051,Mutton Curry,ஆட்டிறைச்சி குழம்பு,south_indian,dinner,30,low,40.0,1.0,10.0,49.0,220.0,long,False,"[""low_gi"",""high_protein"",""high_fat""]",14,https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&q=80
+meal052,Tandoori Chicken,தந்தூரி சிக்கன்,north_indian,dinner,0,low,65.0,0.0,5.0,30.0,150.0,long,False,"[""low_gi"",""zero_carb"",""high_protein""]",5,https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400&q=80
+meal053,Fish Fry,மீன் வறுவல்,south_indian,snack,0,low,50.0,0.0,5.0,45.0,240.0,moderate,False,"[""low_gi"",""zero_carb"",""high_protein""]",4,https://images.unsplash.com/photo-1510130387422-82bed34b37e9?w=400&q=80
+meal054,Prawn Thokku,இறால் தொக்கு,south_indian,dinner,20,low,55.0,2.0,15.0,28.0,145.0,moderate,False,"[""low_gi"",""high_protein""]",14,https://images.unsplash.com/photo-1536489885071-87983c3e2859?w=400&q=80
+meal055,Egg Curry,முட்டை குழம்பு,south_indian,dinner,20,low,25.0,1.0,25.0,49.0,140.0,moderate,False,"[""low_gi"",""high_protein""]",22,https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&q=80
+meal056,Keema Paratha,கீமா பரோட்டா,north_indian,breakfast,55,medium,22.0,4.0,50.0,28.0,260.0,long,False,"[""medium_gi"",""high_protein""]",81,https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&q=80
+meal057,Butter Chicken,பட்டர் சிக்கன்,north_indian,dinner,35,low,25.0,1.0,15.0,59.0,240.0,long,False,"[""low_gi"",""high_protein"",""high_fat""]",22,https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&q=80
+meal058,Fish Tikka,மீன் டிக்கா,north_indian,snack,0,low,60.0,0.0,5.0,35.0,160.0,moderate,False,"[""low_gi"",""zero_carb"",""high_protein"",""snack_friendly""]",2,https://images.unsplash.com/photo-1510130387422-82bed34b37e9?w=400&q=80
+meal059,Vegetable Stew,காய் கறி ஸ்டூ,south_indian,dinner,40,low,10.0,7.0,50.0,40.0,110.0,moderate,True,"[""low_gi"",""high_fiber""]",34,https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400&q=80
+meal060,Malabar Parotta,பரோட்டா,south_indian,dinner,78,high,8.0,1.5,70.0,20.5,320.0,long,True,"[""high_gi"",""avoid_for_t2""]",140,https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&q=80
+meal061,Misal Pav,மிசல் பாவ்,west_indian,breakfast,55,medium,18.0,8.0,60.0,22.0,210.0,long,True,"[""medium_gi"",""high_protein""]",79,https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=400&q=80
+meal062,Rava Dosa,ரவா தோசை,south_indian,breakfast,62,medium,9.0,2.0,72.0,17.0,175.0,moderate,True,"[""medium_gi""]",79,https://images.unsplash.com/photo-1630383249896-424e482df921?w=400&q=80
+meal063,Cabbage Poriyal,முட்டைக்கோஸ் பொரியல்,south_indian,lunch,15,low,15.0,9.0,45.0,40.0,75.0,quick,True,"[""low_gi"",""high_fiber"",""diabetic_friendly""]",21,https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400&q=80
+meal064,Sabudana Khichdi,சபுதானா கிச்சடி,west_indian,breakfast,75,high,3.0,1.0,85.0,12.0,210.0,moderate,True,"[""high_gi"",""avoid_for_t2""]",112,https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&q=80
+meal065,Mutton Biryani,மட்டன் பிரியாணி,north_indian,lunch,62,medium,22.0,2.0,50.0,28.0,230.0,long,False,"[""medium_gi"",""high_protein""]",72,https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&q=80
