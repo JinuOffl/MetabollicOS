@@ -7,7 +7,7 @@ import random
 import math
 
 # --- CONFIGURATION ---
-SERVER_IP = "10.240.206.169"  # Default: same machine. Change via web UI below.
+SERVER_IP = "10.28.33.169"  # Default: same machine. Change via web UI below.
 USER_ID = "demo_user_experienced"  # Default demo user
 
 app = Flask(__name__)

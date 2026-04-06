@@ -26,7 +26,7 @@ import '../models/sequence_result.dart';
 class GlucoNavApiService {
   // Use localhost for same-machine Chrome demo (flutter run -d chrome)
   // Change to your WiFi IP if testing from a separate device
-  static String _base = 'http://10.240.206.169:8000/api/v1';
+  static String _base = 'http://10.28.33.169:8000/api/v1';
 
   /// Active user ID. Set during onboarding; defaults to demo_user_experienced.
   static String userId = 'demo_user_experienced';
